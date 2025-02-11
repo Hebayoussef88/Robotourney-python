@@ -1,0 +1,9 @@
+x  = 4
+y = 9
+print(x+y) #addition
+print(x/y) #divison
+print(x-y)  #subtraction
+print(x*y)    #mulitplcation
+print(x//y)  
+print(x%y)   #moduls
+print(x**y) #exponentation
