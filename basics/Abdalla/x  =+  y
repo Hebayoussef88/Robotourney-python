@@ -1,0 +1,9 @@
+print("Arthemtic opreators")
+x = 4
+y = x
+print(y)
+b = 4
+y = 3
+b += y
+print(b)
+
