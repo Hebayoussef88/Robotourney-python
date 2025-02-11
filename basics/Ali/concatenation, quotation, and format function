@@ -1,0 +1,11 @@
+first_name =  'I am ali ' #single quotition
+second_name = "hatem" # double quotition
+line = ''', I am''' # triple quotition
+age = " 13 "
+age2 = 13
+line2 = "years old"
+ 
+print(first_name + second_name + line + age + line2) # the integer should be converted to string
+
+# to use integer with string use the format function
+print(f" {first_name}{second_name}, {age2} {line2}")
