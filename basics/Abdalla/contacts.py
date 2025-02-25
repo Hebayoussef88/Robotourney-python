@@ -15,7 +15,7 @@ def remove_contact(contacts):
         print("sorry name doesnt exist in contacts")
 
 def view_contact(contacts):
-    print(conta.cts)
+    print(contacts)
 
 def search_contacts (contacts):
     name2 = input("Enter the name of the contact you are looking for: ")
