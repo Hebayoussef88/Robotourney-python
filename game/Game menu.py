@@ -1,7 +1,7 @@
 import pygame
 import os
 from pygame.display import get_window_size
-from pygame.locals import (K_UP,K_DOWN,K_LEFT,K_RIGHT,K_ESCAPE,KEYDOWN,QUIT,)
+from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
 
 pygame.init
 
@@ -18,15 +18,10 @@ running = True
 while running:
     
     for event in pygame.event.get():
-        
-        if event.type == KEYDOWN:
-        
-            if event.key == K_ESCAPE:
-                running = False
-
-        
-        elif event.type == QUIT:
+        if event.type == QUIT:
             running = False
 
     screen.blit(screen1, (0,0))
     pygame.display.update()
+
+pygame.quit()
