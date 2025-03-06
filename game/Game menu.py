@@ -54,3 +54,15 @@ while running:
     else:
         play_unclicked == pygame.image.load("play_unclicked.png").convert_alpha()
         pygame.mouse.set_cursor()
+        
+
+  
+
+    screen.blit(screen1, (0,0))
+    screen.blit(my_text, (180, 50))
+    screen.blit(play_unclicked, (button_x1, button_y1))
+    screen.blit(options_unclicked, (button_x2, button_y2))
+    screen.blit(quit_unclicked, (button_x3, button_y3))
+    pygame.display.update()
+
+pygame.quit()
