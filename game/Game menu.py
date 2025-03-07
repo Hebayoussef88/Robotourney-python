@@ -75,7 +75,7 @@ while running:
         if pygame.mouse.get_pressed()[0]:
             try:
                 process = subprocess.Popen(['python', 'level 1.py'])
-                process.wait(timeout=0.5)
+                process.wait(timeout=1.0)
             except subprocess.TimeoutExpired:
                 print("Timeout reached. Process terminated.")
                 exit()
