@@ -1,13 +1,50 @@
 import pygame
 import os
 import subprocess
-
+import sys
 
 from pygame.display import get_window_size
 from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
 
-
 pygame.init()
+
+screen_height = 672
+screen_width  = 1200
+
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+def options():
+    global screen
+    running1 = True
+    while running1:
+        back_op = pygame.image.load("pixil-frame-0.png")
+        back_op = pygame.transform.scale(back_op, (screen_width, screen_height))
+        screen.blit(back_op, (0, 0))
+
+        options_title = pygame.image.load("options title.png")
+        screen.blit(options_title, (15, 5))
+
+        fullscreen_button = pygame.image.load("Fullscreen.png")
+        fullscreen_button = pygame.transform.scale(fullscreen_button, (350, 100))
+        screen.blit(fullscreen_button, (8, 125))
+        fullscreen_pos = (8, 125)
+        fullscreen_rect = pygame.Rect(fullscreen_pos, fullscreen_button.get_size())
+        if fullscreen_rect.collidepoint(pygame.mouse.get_pos()):
+            pygame.mouse.set_cursor(hand)
+            if pygame.mouse.get_pressed()[0]:  
+                screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+        else:
+            pygame.mouse.set_cursor()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running1 = False
+
+        pygame.display.flip()
+
 
 def play():
     import pygame
@@ -18,9 +55,12 @@ def play():
     from pygame.display import get_window_size
     from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
 
+    global screen
+
     pygame.init()
 
     window_size = (1200, 672)
+
 
     intro = "chronochills intro video.mp4"
     audio_path = "chronochills intro.mp3"
@@ -37,7 +77,6 @@ def play():
 
 
 
-    screen = pygame.display.set_mode(window_size)
     pygame.display.set_caption("level 1")
     logo = pygame.image.load("chronochills logo.png")
     logo = pygame.transform.scale(logo, (550, 300))
@@ -49,6 +88,7 @@ def play():
     delay = int(1000 / fps)  # Calculate the frame delay
 
     while running:
+        pygame.mouse.set_cursor()
         ret, frame = cap.read()
         frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Or ROTATE_90_COUNTERCLOCKWISE if needed
         frame = cv2.flip(frame, 0)
@@ -75,7 +115,6 @@ def play():
     pygame.mixer.music.stop()
     cap.release()
     pygame.quit()
-
 
 screen_height = 672
 screen_width  = 1200
@@ -149,6 +188,8 @@ while running:
     elif button_rect1.collidepoint(pygame.mouse.get_pos()):
         pygame.mouse.set_cursor(hand)
         screen.blit(options_clicked, (button_x2, button_y2))
+        if pygame.mouse.get_pressed()[0]:
+            options()
     elif button_rect2.collidepoint(pygame.mouse.get_pos()):
         pygame.mouse.set_cursor(hand)
         screen.blit(quit_clicked, (button_x3, button_y3))
