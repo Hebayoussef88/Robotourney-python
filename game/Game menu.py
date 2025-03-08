@@ -10,13 +10,16 @@ pygame.init()
 
 screen_height = 672
 screen_width  = 1200
+mute_state = True
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
+clock = pygame.time.Clock()
+
 def options():
-    global screen
+    global screen, mute_state
     running1 = True
-    mute_state = True  # Initialize mute state (True means muted)
+  # Initialize mute state (True means muted)
 
     while running1:
         # Background and options title
@@ -25,7 +28,8 @@ def options():
         screen.blit(back_op, (0, 0))
 
         options_title = pygame.image.load("options title.png")
-        screen.blit(options_title, (15, 5))
+        options_title = pygame.transform.scale(options_title, (300, 175))
+        screen.blit(options_title, (25, -5))
 
         # Buttons
         fullscreen_button = pygame.image.load("fullscreen.png")
@@ -71,6 +75,20 @@ def options():
                     screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
                 elif exit_fullscreen_rect.collidepoint(event.pos) and screen.get_flags() & pygame.FULLSCREEN:
                     screen = pygame.display.set_mode((screen_width, screen_height))
+                    pygame.display.update()
+
+        back = pygame.image.load("back.png")
+        screen.blit(back, (-50, 400))
+        back_pos = (-50, 400)
+        back_rect = pygame.Rect(back_pos, back.get_size())
+        if back_rect.collidepoint(pygame.mouse.get_pos()):
+            pygame.mouse.set_cursor(hand)
+            if pygame.mouse.get_pressed()[0]:
+                pygame.mouse.set_cursor(hand)
+                running1 = False
+            else:
+                pygame.mouse.set_cursor()
+
 
         # Update the display
         pygame.display.flip()
@@ -86,7 +104,7 @@ def play():
     from pygame.display import get_window_size
     from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
 
-    global screen
+    global screen, mute_state
 
     pygame.init()
 
@@ -100,7 +118,10 @@ def play():
     pygame.mixer.init()
     pygame.mixer.music.load(audio_path)
     pygame.mixer.music.play()
-
+    if mute_state:
+        pygame.mixer.music.set_volume(1)
+    else:
+        pygame.mixer.music.set_volume(0)
     if not cap.isOpened():
         print("Error: Cannot open video file.")
         sys.exit()
@@ -137,6 +158,10 @@ def play():
                 pygame.mixer.music.stop()
                 pygame.quit()
                 sys.exit()
+
+        clock.tick(60)
+        fps = clock.get_fps()
+        print(f"current fps = {fps}")
 
         screen.blit(frame_surface, (0, 0))
         pygame.display.update()
@@ -187,13 +212,11 @@ mouse_pressed = pygame.mouse.get_pressed()
 
 
 while running:
-    
-    mute_state = True
-    
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
 
+            clock.tick(60)
             if event.type == pygame.MOUSEBUTTONDOWN:  # Detect single click
                 if mute_rect.collidepoint(event.pos):  # Check if the mute button is clicked
                     mute_state = not mute_state  # Toggle mute state
