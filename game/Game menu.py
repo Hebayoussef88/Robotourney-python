@@ -16,6 +16,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 def options():
     global screen
     running1 = True
+    mute_state = True  # Initialize mute state (True means muted)
 
     while running1:
         # Background and options title
@@ -32,45 +33,29 @@ def options():
         exit_fullscreen_button = pygame.image.load("exit fullscreen.png")
         exit_fullscreen_button = pygame.transform.scale(exit_fullscreen_button, (350, 100))
 
-        mute = pygame.image.load("unmute.png")
-        mute = pygame.transform.scale(mute, (150, 150))
-        unmute = pygame.image.load("mute.png")
-        unmute = pygame.transform.scale(unmute, (150, 150))
+        # Load mute/unmute button based on state
+        if mute_state:
+            mute_button = pygame.image.load("unmute.png")
+        else:
+            mute_button = pygame.image.load("mute.png")
+        mute_button = pygame.transform.scale(mute_button, (150, 150))
 
         # Button positions and hitboxes
         button_pos = (8, 125)  # Same position for fullscreen/exit button
         fullscreen_rect = pygame.Rect(button_pos, fullscreen_button.get_size())
         exit_fullscreen_rect = pygame.Rect(button_pos, exit_fullscreen_button.get_size())
         mute_pos = (20, 200)
-        mute_rect = pygame.Rect(mute_pos, mute.get_size())
+        mute_rect = pygame.Rect(mute_pos, mute_button.get_size())
 
-        # Draw mute button and handle click
-        screen.blit(mute, mute_pos)
-        if mute_rect.collidepoint(pygame.mouse.get_pos()):
-            pygame.mouse.set_cursor(hand)
-            if pygame.mouse.get_pressed()[0]:  # When clicked
-                # Display unmute button (example toggle)
-                screen.blit(unmute, mute_pos)
-
-        # Check display mode and render appropriate fullscreen button
+        # Draw mute and fullscreen buttons
+        screen.blit(mute_button, mute_pos)
         if screen.get_flags() & pygame.FULLSCREEN:
             screen.blit(exit_fullscreen_button, button_pos)
-            if exit_fullscreen_rect.collidepoint(pygame.mouse.get_pos()):
-                pygame.mouse.set_cursor(hand)
-                if pygame.mouse.get_pressed()[0]:
-                    screen = pygame.display.set_mode((screen_width, screen_height))  # Exit fullscreen
         else:
             screen.blit(fullscreen_button, button_pos)
-            if fullscreen_rect.collidepoint(pygame.mouse.get_pos()):
-                pygame.mouse.set_cursor(hand)
-                if pygame.mouse.get_pressed()[0]:
-                    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)  # Enter fullscreen
 
         # Reset cursor if not over buttons
-        if not (fullscreen_rect.collidepoint(pygame.mouse.get_pos()) or 
-                exit_fullscreen_rect.collidepoint(pygame.mouse.get_pos()) or 
-                mute_rect.collidepoint(pygame.mouse.get_pos())):
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
         # Event handling
         for event in pygame.event.get():
@@ -79,6 +64,13 @@ def options():
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running1 = False
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detect single click
+                if mute_rect.collidepoint(event.pos):  # Check if mute button is clicked
+                    mute_state = not mute_state  # Toggle mute state
+                elif fullscreen_rect.collidepoint(event.pos) and not screen.get_flags() & pygame.FULLSCREEN:
+                    screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+                elif exit_fullscreen_rect.collidepoint(event.pos) and screen.get_flags() & pygame.FULLSCREEN:
+                    screen = pygame.display.set_mode((screen_width, screen_height))
 
         # Update the display
         pygame.display.flip()
@@ -196,9 +188,21 @@ mouse_pressed = pygame.mouse.get_pressed()
 
 while running:
     
+    mute_state = True
+    
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:  # Detect single click
+                if mute_rect.collidepoint(event.pos):  # Check if the mute button is clicked
+                    mute_state = not mute_state  # Toggle mute state
+            if mute_state:
+                # Display the mute button
+                screen.blit(mute, mute_pos)
+            else:
+                # Display the unmute button
+                screen.blit(unmute, mute_pos)
 
     my_text = Font1.render("chronochills", True, (255, 255, 255))
     button_pos = (520, 300)
