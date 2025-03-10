@@ -18,10 +18,10 @@ clock = pygame.time.Clock()
 
 def options():
     global screen, mute_state
-    running1 = True
+    running10 = True
   # Initialize mute state (True means muted)
 
-    while running1:
+    while running10:
         # Background and options title
         back_op = pygame.image.load("pixil-frame-0.png")
         back_op = pygame.transform.scale(back_op, (screen_width, screen_height))
@@ -67,7 +67,7 @@ def options():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running1 = False
+                running10 = False
             if event.type == pygame.MOUSEBUTTONDOWN:  # Detect single click
                 if mute_rect.collidepoint(event.pos):  # Check if mute button is clicked
                     mute_state = not mute_state  # Toggle mute state
@@ -85,7 +85,7 @@ def options():
             pygame.mouse.set_cursor(hand)
             if pygame.mouse.get_pressed()[0]:
                 pygame.mouse.set_cursor(hand)
-                running1 = False
+                running10 = False
             else:
                 pygame.mouse.set_cursor()
 
@@ -93,7 +93,55 @@ def options():
         # Update the display
         pygame.display.flip()
 
+def display_spritesheet():
+    global screen  # Ensure screen is accessible
+    # Load the spritesheet
+    try:
+        sprite_sheet = pygame.image.load('adam_walk_1-sheet.png').convert_alpha()
+    except pygame.error as e:
+        print(f"Error loading sprite sheet: {e}")
+        return
 
+    # Define the size of each frame
+    frame_width = 410
+    frame_height = 998
+    num_frames = sprite_sheet.get_width() // frame_width
+
+    # Extract each frame
+    frames = []
+    for i in range(num_frames):
+        frame = sprite_sheet.subsurface((i * frame_width, 0, frame_width, frame_height))
+        frames.append(frame)
+
+    # Animation loop
+    clock = pygame.time.Clock()
+    frame_index = 0
+    running1 = True
+
+    while running1:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
+                running1 = False
+
+        # Clear the screen
+        screen.fill((0, 0, 0))
+
+        # Display the current frame
+        screen.blit(frames[frame_index],
+                    (screen.get_width() // 2 - frame_width // 2,
+                     screen.get_height() // 2 - frame_height // 2))
+        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
+
+        # Update the display
+        pygame.display.update()
+        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
+
+
+
+    pygame.quit()
 
 def play():
     import pygame
@@ -102,13 +150,15 @@ def play():
     import cv2
 
     from pygame.display import get_window_size
-    from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
+    from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,K_SPACE,KEYDOWN,QUIT,)
 
     global screen, mute_state
 
     pygame.init()
 
     window_size = (1200, 672)
+
+    sprite_sheet = pygame.image.load('adam_walk_1-sheet.png')
 
 
     intro = "chronochills intro video.mp4"
@@ -140,36 +190,40 @@ def play():
     delay = int(1000 / fps)  # Calculate the frame delay
 
     while running:
-        pygame.mouse.set_cursor()
         ret, frame = cap.read()
-        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Or ROTATE_90_COUNTERCLOCKWISE if needed
-        frame = cv2.flip(frame, 0)
-    
-        # Convert frame (BGR to RGB)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-        # Convert frame to Pygame Surface
+        if not ret:  # Exit the loop if the video ends
+            break
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            break
+
+        # Frame processing
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate frame
+        frame = cv2.flip(frame, 0)  # Flip vertically
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
         frame_surface = pygame.surfarray.make_surface(frame)
         frame_surface = pygame.transform.scale(frame_surface, window_size)
-    
+
+        # Event handling
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == QUIT:  # Close window
                 cap.release()
                 pygame.mixer.music.stop()
                 pygame.quit()
                 sys.exit()
+  # Exit the loop
 
-        clock.tick(60)
-        fps = clock.get_fps()
-        print(f"current fps = {fps}")
-
+        # Draw and display frame
         screen.blit(frame_surface, (0, 0))
         pygame.display.update()
-
         pygame.time.delay(delay)
 
-    pygame.mixer.music.stop()
-    cap.release()
+
+
+    # Add this after the video loop
+    pygame.mixer.music.stop()  # Stop the audio
+    cap.release()# Release the video file
+    display_spritesheet()
     pygame.quit()
 
 screen_height = 672
@@ -206,12 +260,12 @@ quit_clicked = pygame.transform.scale(quit_clicked, (150, 90))
 hand = pygame.SYSTEM_CURSOR_HAND
     
 
-running = True
+running5 = True
 
 mouse_pressed = pygame.mouse.get_pressed()
 
 
-while running:
+while running5:
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
