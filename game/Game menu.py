@@ -93,7 +93,64 @@ def options():
         # Update the display
         pygame.display.flip()
 
-def display_spritesheet():
+def display_idle():
+    global screen  # Ensure screen is accessible
+    # Load the spritesheet
+    try:
+        sprite_sheet = pygame.image.load('adam_idle-sheet.png').convert_alpha()
+    except pygame.error as e:
+        print(f"Error loading sprite sheet: {e}")
+        return
+
+    # Define the size of each frame
+    frame_width1 = 420
+    frame_height1 = 998
+    num_frames = sprite_sheet.get_width() // frame_width1
+
+    # Extract each frame
+    frames = []
+    for i in range(num_frames):
+        frame = sprite_sheet.subsurface((i * frame_width1, 0, frame_width1, frame_height1))
+        frames.append(frame)
+
+    # Animation loop
+    clock = pygame.time.Clock()
+    frame_index = 0
+    running1 = True
+
+    while running1:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
+                running1 = False
+
+        # Clear the screen
+        screen.fill((0, 0, 0))
+
+        # Display the current frame
+        screen.blit(frames[frame_index],
+                    (screen.get_width() // 2 - frame_width1 // 2,
+                     screen.get_height() // 2 - frame_height1 // 2))
+        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
+
+        keys1 = pygame.key.get_pressed()
+        if keys1[pygame.K_d]:
+            display_walk()
+        
+        if keys1[pygame.K_w]:
+            display_jump()
+
+        # Update the display
+        pygame.display.update()
+        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
+
+
+
+    pygame.quit()
+
+def display_walk():
     global screen  # Ensure screen is accessible
     # Load the spritesheet
     try:
@@ -105,6 +162,56 @@ def display_spritesheet():
     # Define the size of each frame
     frame_width = 410
     frame_height = 998
+    num_frames = sprite_sheet.get_width() // frame_width
+
+    # Extract each frame
+    frames = []
+    for i in range(num_frames):
+        frame = sprite_sheet.subsurface((i * frame_width, 0, frame_width, frame_height))
+        frames.append(frame)
+
+    # Animation loop
+    clock = pygame.time.Clock()
+    frame_index = 0
+    running1 = True
+
+    while running1:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
+                running1 = False
+
+        # Clear the screen
+        screen.fill((0, 0, 0))
+
+        # Display the current frame
+        screen.blit(frames[frame_index],
+                    (screen.get_width() // 2 - frame_width // 2,
+                     screen.get_height() // 2 - frame_height // 2))
+        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
+
+        # Update the display
+        pygame.display.update()
+        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
+
+
+
+    pygame.quit()
+
+def display_jump():
+    global screen  # Ensure screen is accessible
+    # Load the spritesheet
+    try:
+        sprite_sheet = pygame.image.load('adam_jump-sheet.png').convert_alpha()
+    except pygame.error as e:
+        print(f"Error loading sprite sheet: {e}")
+        return
+
+    # Define the size of each frame
+    frame_width = 416
+    frame_height = 892
     num_frames = sprite_sheet.get_width() // frame_width
 
     # Extract each frame
@@ -223,7 +330,7 @@ def play():
     # Add this after the video loop
     pygame.mixer.music.stop()  # Stop the audio
     cap.release()# Release the video file
-    display_spritesheet()
+    display_idle()
     pygame.quit()
 
 screen_height = 672
