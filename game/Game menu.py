@@ -2,6 +2,7 @@ import pygame
 import os
 import subprocess
 import sys
+from pytmx import load_pygame
 
 from pygame.display import get_window_size
 from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
@@ -14,7 +15,19 @@ mute_state = True
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
+tmx_data = load_pygame("tilemap.tmx")
+
+# Function to render the map
+
 clock = pygame.time.Clock()
+
+def load_tilemap(map_file):
+    """Load and draw the tilemap."""
+    tmx_data = load_pygame(map_file)
+    for layer in tmx_data.visible_layers:
+        if hasattr(layer, "tiles"):  # Check if the layer contains tiles
+            for x, y, tile in layer.tiles():
+                screen.blit(tile, (x * tmx_data.tilewidth, y * tmx_data.tileheight))
 
 def options():
     global screen, mute_state
@@ -93,162 +106,30 @@ def options():
         # Update the display
         pygame.display.flip()
 
-def display_idle():
-    global screen  # Ensure screen is accessible
-    # Load the spritesheet
+def load_animation(sprite_sheet_path, frame_width, frame_height, scale_factor=0.2):
+    """Load and scale frames from a spritesheet."""
     try:
-        sprite_sheet = pygame.image.load('adam_idle-sheet.png').convert_alpha()
+        sprite_sheet = pygame.image.load(sprite_sheet_path).convert_alpha()
     except pygame.error as e:
         print(f"Error loading sprite sheet: {e}")
-        return
+        return []
 
-    # Define the size of each frame
-    frame_width1 = 420
-    frame_height1 = 998
-    num_frames = sprite_sheet.get_width() // frame_width1
-
-    # Extract each frame
-    frames = []
-    for i in range(num_frames):
-        frame = sprite_sheet.subsurface((i * frame_width1, 0, frame_width1, frame_height1))
-        frames.append(frame)
-
-    # Animation loop
-    clock = pygame.time.Clock()
-    frame_index = 0
-    running1 = True
-
-    while running1:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
-                running1 = False
-
-        # Clear the screen
-        screen.fill((0, 0, 0))
-
-        # Display the current frame
-        screen.blit(frames[frame_index],
-                    (screen.get_width() // 2 - frame_width1 // 2,
-                     screen.get_height() // 2 - frame_height1 // 2))
-        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
-
-        keys1 = pygame.key.get_pressed()
-        if keys1[pygame.K_d]:
-            display_walk()
-        
-        if keys1[pygame.K_w]:
-            display_jump()
-
-        # Update the display
-        pygame.display.update()
-        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
-
-
-
-    pygame.quit()
-
-def display_walk():
-    global screen  # Ensure screen is accessible
-    # Load the spritesheet
-    try:
-        sprite_sheet = pygame.image.load('adam_walk_1-sheet.png').convert_alpha()
-    except pygame.error as e:
-        print(f"Error loading sprite sheet: {e}")
-        return
-
-    # Define the size of each frame
-    frame_width = 410
-    frame_height = 998
     num_frames = sprite_sheet.get_width() // frame_width
 
-    # Extract each frame
-    frames = []
-    for i in range(num_frames):
-        frame = sprite_sheet.subsurface((i * frame_width, 0, frame_width, frame_height))
-        frames.append(frame)
+    # Calculate scaled dimensions
+    scaled_width = int(frame_width * scale_factor)
+    scaled_height = int(frame_height * scale_factor)
 
-    # Animation loop
-    clock = pygame.time.Clock()
-    frame_index = 0
-    running1 = True
+    # Extract and scale each frame
+    frames = [
+        pygame.transform.scale(
+            sprite_sheet.subsurface((i * frame_width, 0, frame_width, frame_height)),
+            (scaled_width, scaled_height)
+        )
+        for i in range(num_frames)
+    ]
+    return frames
 
-    while running1:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
-                running1 = False
-
-        # Clear the screen
-        screen.fill((0, 0, 0))
-
-        # Display the current frame
-        screen.blit(frames[frame_index],
-                    (screen.get_width() // 2 - frame_width // 2,
-                     screen.get_height() // 2 - frame_height // 2))
-        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
-
-        # Update the display
-        pygame.display.update()
-        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
-
-
-
-    pygame.quit()
-
-def display_jump():
-    global screen  # Ensure screen is accessible
-    # Load the spritesheet
-    try:
-        sprite_sheet = pygame.image.load('adam_jump-sheet.png').convert_alpha()
-    except pygame.error as e:
-        print(f"Error loading sprite sheet: {e}")
-        return
-
-    # Define the size of each frame
-    frame_width = 416
-    frame_height = 892
-    num_frames = sprite_sheet.get_width() // frame_width
-
-    # Extract each frame
-    frames = []
-    for i in range(num_frames):
-        frame = sprite_sheet.subsurface((i * frame_width, 0, frame_width, frame_height))
-        frames.append(frame)
-
-    # Animation loop
-    clock = pygame.time.Clock()
-    frame_index = 0
-    running1 = True
-
-    while running1:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == KEYDOWN and event.key == K_ESCAPE:  # Exit on ESC
-                running1 = False
-
-        # Clear the screen
-        screen.fill((0, 0, 0))
-
-        # Display the current frame
-        screen.blit(frames[frame_index],
-                    (screen.get_width() // 2 - frame_width // 2,
-                     screen.get_height() // 2 - frame_height // 2))
-        frame_index = (frame_index + 1) % num_frames  # Cycle through frames
-
-        # Update the display
-        pygame.display.update()
-        clock.tick(10)  # Set the frame rate (e.g., 10 FPS)
-
-
-
-    pygame.quit()
 
 def play():
     import pygame
@@ -330,8 +211,85 @@ def play():
     # Add this after the video loop
     pygame.mixer.music.stop()  # Stop the audio
     cap.release()# Release the video file
-    display_idle()
-    pygame.quit()
+    player()
+
+def player():
+    """Main game loop handling animations and events."""
+    global screen
+
+    # Screen settings
+    screen_width, screen_height = 1200, 672
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("Level 1")
+
+    clock = pygame.time.Clock()
+
+    # Load animations
+    idle_frames = load_animation('adam_idle-sheet.png', 420, 998)
+    walk_frames = load_animation('adam_walk_1-sheet.png', 410, 998)
+    jump_frames = load_animation('adam_jump-sheet.png', 416, 892)
+
+    map_file = "tilemap.tmx"
+
+    # Offset to move spritesheets down
+    OFFSET_Y = 140
+
+    # Initial state
+    current_frames = idle_frames
+    current_state = "idle"
+    frame_index = 0
+
+    # Load background and icon
+    logo = pygame.image.load("chronochills logo.png")
+    logo = pygame.transform.scale(logo, (550, 300))
+    pygame.display.set_icon(logo)
+
+    background_image = pygame.image.load("level1_bg.png")
+
+    # Main loop
+    while True:
+        screen.blit(background_image, (0, 0))  # Draw background
+
+        load_tilemap(map_file)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_d:  # Walking
+                    current_state = "walking"
+                    current_frames = walk_frames
+                    frame_index = 0
+                elif event.key == pygame.K_w:  # Jumping
+                    current_state = "jumping"
+                    current_frames = jump_frames
+                    frame_index = 0
+
+            if event.type == pygame.KEYUP:
+                if event.key in (pygame.K_d, pygame.K_w):  # Idle
+                    current_state = "idle"
+                    current_frames = idle_frames
+                    frame_index = 0
+
+        # Display the current frame of the animation
+        if current_frames:
+            screen.blit(
+                current_frames[frame_index],
+                (
+                    screen.get_width() // 2 - current_frames[0].get_width() // 2,
+                    screen.get_height() // 2 - current_frames[0].get_height() // 2 + OFFSET_Y
+                )
+            )
+            frame_index = (frame_index + 1) % len(current_frames)
+
+        pygame.display.update()
+        clock.tick(10)  # Control animation speed (10 FPS)
+
+
+
+
 
 screen_height = 672
 screen_width  = 1200
@@ -371,8 +329,11 @@ running5 = True
 
 mouse_pressed = pygame.mouse.get_pressed()
 
+screen = pygame.display.set_mode((1200, 672))
+
 
 while running5:
+    pygame.init()
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
