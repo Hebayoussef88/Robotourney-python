@@ -12,6 +12,7 @@ pygame.init()
 screen_height = 672
 screen_width  = 1200
 mute_state = True
+fullscreen = False
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
@@ -30,7 +31,7 @@ def load_tilemap(map_file):
                 screen.blit(tile, (x * tmx_data.tilewidth, y * tmx_data.tileheight))
 
 def options():
-    global screen, mute_state
+    global screen, mute_state, fullscreen
     running10 = True
   # Initialize mute state (True means muted)
 
@@ -86,8 +87,10 @@ def options():
                     mute_state = not mute_state  # Toggle mute state
                 elif fullscreen_rect.collidepoint(event.pos) and not screen.get_flags() & pygame.FULLSCREEN:
                     screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+                    fullscreen = True
                 elif exit_fullscreen_rect.collidepoint(event.pos) and screen.get_flags() & pygame.FULLSCREEN:
                     screen = pygame.display.set_mode((screen_width, screen_height))
+                    fullscreen = False
                     pygame.display.update()
 
         back = pygame.image.load("back.png")
@@ -215,12 +218,17 @@ def play():
 
 def player():
     """Main game loop handling animations, movement, and events."""
-    global screen
+    global screen, fullscreen
 
     # Screen settings
     screen_width, screen_height = 1200, 672
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("Level 1")
+    if fullscreen == True:
+        screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+        
+    else:
+        screen = pygame.display.set_mode((screen_width, screen_height))
 
     clock = pygame.time.Clock()
 
