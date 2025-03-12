@@ -214,7 +214,7 @@ def play():
     player()
 
 def player():
-    """Main game loop handling animations and events."""
+    """Main game loop handling animations, movement, and events."""
     global screen
 
     # Screen settings
@@ -234,10 +234,20 @@ def player():
     # Offset to move spritesheets down
     OFFSET_Y = 140
 
+    # Player position and movement settings
+    player_x = screen_width // 2
+    player_y = screen_height // 2 + OFFSET_Y
+    player_speed = 5
+    jump_velocity = -20  # Initial jump velocity
+    gravity = 1  # Gravity force
+    is_jumping = False
+    facing_right = True  # Tracks the current direction of the sprite
+
     # Initial state
     current_frames = idle_frames
     current_state = "idle"
     frame_index = 0
+    frame_timer = 0  # Timer to control animation speed
 
     # Load background and icon
     logo = pygame.image.load("chronochills logo.png")
@@ -249,43 +259,70 @@ def player():
     # Main loop
     while True:
         screen.blit(background_image, (0, 0))  # Draw background
-
         load_tilemap(map_file)
+
+        keys = pygame.key.get_pressed()  # Check for key presses
+
+        # Movement logic
+        if keys[pygame.K_d]:  # Move right
+            current_state = "walking"
+            current_frames = walk_frames
+            frame_index %= len(current_frames)  # Prevent index errors
+            player_x += player_speed
+            facing_right = True
+        elif keys[pygame.K_a]:  # Move left
+            current_state = "walking"
+            current_frames = walk_frames
+            frame_index %= len(current_frames)  # Prevent index errors
+            player_x -= player_speed
+            facing_right = False
+        elif not is_jumping:  # Idle state only when not jumping
+            current_state = "idle"
+            current_frames = idle_frames
+            frame_index %= len(current_frames)  # Prevent index errors
+
+        if keys[pygame.K_w] and not is_jumping:  # Start jump
+            is_jumping = True
+            current_state = "jumping"
+            current_frames = jump_frames
+            frame_index = 0
+
+        # Jumping logic
+        if is_jumping:
+            player_y += jump_velocity
+            jump_velocity += gravity
+            if player_y >= screen_height // 2 + OFFSET_Y:  # Reset position after jump
+                player_y = screen_height // 2 + OFFSET_Y
+                is_jumping = False
+                jump_velocity = -20  # Reset velocity
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_d:  # Walking
-                    current_state = "walking"
-                    current_frames = walk_frames
-                    frame_index = 0
-                elif event.key == pygame.K_w:  # Jumping
-                    current_state = "jumping"
-                    current_frames = jump_frames
-                    frame_index = 0
-
-            if event.type == pygame.KEYUP:
-                if event.key in (pygame.K_d, pygame.K_w):  # Idle
-                    current_state = "idle"
-                    current_frames = idle_frames
-                    frame_index = 0
+        # Animation frame update (control speed)
+        frame_timer += 1
+        if frame_timer >= 5:  # Update frame every 5 ticks
+            frame_index = (frame_index + 1) % len(current_frames)
+            frame_timer = 0
 
         # Display the current frame of the animation
         if current_frames:
+            frame = current_frames[frame_index]
+            if not facing_right:  # Flip frame if facing left
+                frame = pygame.transform.flip(frame, True, False)
             screen.blit(
-                current_frames[frame_index],
-                (
-                    screen.get_width() // 2 - current_frames[0].get_width() // 2,
-                    screen.get_height() // 2 - current_frames[0].get_height() // 2 + OFFSET_Y
-                )
+                frame,
+                (player_x - frame.get_width() // 2, player_y - frame.get_height() // 2)
             )
-            frame_index = (frame_index + 1) % len(current_frames)
 
         pygame.display.update()
-        clock.tick(10)  # Control animation speed (10 FPS)
+        clock.tick(30)  # Control game loop speed (30 FPS)
+
+
+
+
 
 
 
