@@ -237,7 +237,7 @@ def player():
     # Player position and movement settings
     player_x = screen_width // 2
     player_y = screen_height // 2 + OFFSET_Y
-    player_speed = 5
+    player_speed = 7
     jump_velocity = -20  # Initial jump velocity
     gravity = 1  # Gravity force
     is_jumping = False
@@ -286,6 +286,8 @@ def player():
             current_state = "jumping"
             current_frames = jump_frames
             frame_index = 0
+
+
 
         # Jumping logic
         if is_jumping:
