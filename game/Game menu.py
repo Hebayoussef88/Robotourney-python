@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 from pytmx import load_pygame
+import random
 
 from pygame.display import get_window_size
 from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,K_z)
@@ -133,7 +134,6 @@ def load_animation(sprite_sheet_path, frame_width, frame_height, scale_factor=0.
     ]
     return frames
 
-
 def play():
     import pygame
     import os
@@ -216,6 +216,48 @@ def play():
     cap.release()# Release the video file
     player()
 
+class Bullet:
+    def __init__(self, x, y, direction):
+        self.x = x
+        self.y = y
+        self.speed = 10
+        self.direction = direction
+        self.width = 30
+        self.height = 15
+        self.color = (0, 255, 255)  # Blue color
+
+    def move(self):
+        self.x += self.speed * self.direction
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+
+class Monster:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.speed = 3
+        self.direction = random.choice([(self.speed, 0), (-self.speed, 0), (0, self.speed), (0, -self.speed)])
+        self.image = pygame.image.load("monster.png")
+        self.image = pygame.transform.scale(self.image, (150, 150))
+        self.health = 3
+
+    def move(self):
+        if random.randint(0, 50) == 0:  # Change direction randomly
+            self.direction = random.choice([(self.speed, 0), (-self.speed, 0), (0, self.speed), (0, -self.speed)])
+        self.x += self.direction[0]
+        self.y += self.direction[1]
+        
+        # Keep the monster within the screen bounds
+        self.x = max(0, min(screen_width - 250, self.x))
+        self.y = max(0, min(screen_height - 250, self.y))
+
+    def draw(self):
+        screen.blit(self.image, (self.x, self.y))
+
+    def hit(self):
+        self.health -= 1
+
 def player():
     """Main game loop handling animations, movement, and events, including double jumping."""
     global screen, fullscreen
@@ -247,8 +289,8 @@ def player():
     player_x = screen_width // 2
     player_y = screen_height // 2 + OFFSET_Y
     player_speed = 7
-    jump_velocity = -22
-    gravity = 1
+    jump_velocity = -30  # Increased jump velocity for faster jump
+    gravity = 2  # Increased gravity for faster fall
     is_jumping = False
     jump_count = 0  # Tracks the number of jumps
     max_jumps = 2   # Limit to double jump
@@ -267,75 +309,153 @@ def player():
 
     background_image = pygame.image.load("level1_bg.png")
 
+    health = 350  # Initialize health
+
+    # Create three monsters at random positions
+    monsters = [Monster(random.randint(0, screen_width - 150), random.randint(0, screen_height - 150)) for _ in range(3)]
+
+    # Load tilemap and collidable tiles
+    tilemap = load_pygame(map_file)
+    collidable_tiles = []
+    for layer in tilemap.visible_layers:
+        if hasattr(layer, "tiles"):
+            for x, y, tile in layer.tiles():
+                if hasattr(tile, "properties") and "collidable" in tile.properties:
+                    collidable_tiles.append(pygame.Rect(x * tilemap.tilewidth, y * tilemap.tileheight, tilemap.tilewidth, tilemap.tileheight))
+
+    # Load gun image
+    gun_image = pygame.image.load("gun.png")
+    gun_image = pygame.transform.scale(gun_image, (70, 90))  # Adjust the size as needed
+
+    bullets = []
+
     # Main loop
     while True:
         screen.blit(background_image, (0, 0))
         load_tilemap(map_file)
 
+        for monster in monsters:
+            monster.move()
+            monster.draw()
+
         keys = pygame.key.get_pressed()
 
-        health = 350
-
+        # Draw health bar
         pygame.draw.rect(screen, "red", (20, 20, 350, 50))
         pygame.draw.rect(screen, "green", (20, 20, health, 50))
 
-
-
-
         # Movement logic
+        player_dx = 0
+        player_dy = 0
         if keys[pygame.K_d]:  # Move right
             current_state = "walking"
             current_frames = walk_frames
             frame_index %= len(current_frames)
-            player_x += player_speed
+            player_dx = player_speed
             facing_right = True
         elif keys[pygame.K_a]:  # Move left
             current_state = "walking"
             current_frames = walk_frames
             frame_index %= len(current_frames)
-            player_x -= player_speed
+            player_dx = -player_speed
             facing_right = False
         elif not is_jumping:  # Idle state
             current_state = "idle"
             current_frames = idle_frames
             frame_index %= len(current_frames)
 
-        #        # Jump logic with double jump
-        
+        # Jump logic with double jump
         for event in pygame.event.get():
             if event.type == QUIT:
-                quit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_w and jump_count < max_jumps:
-                is_jumping = True
-                jump_count += 1
-                if jump_count == 2:  # Use double jump animation for the second jump
-                    current_state = "double_jumping"
-                    current_frames = double_jump_frames
-                else:
-                    current_state = "jumping"
-                    current_frames = jump_frames
-                frame_index = 0
-                jump_velocity = -22  # Reset velocity for the jump
-
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w and jump_count < max_jumps:
+                    is_jumping = True
+                    jump_count += 1
+                    if jump_count == 2:  # Use double jump animation for the second jump
+                        current_state = "double_jumping"
+                        current_frames = double_jump_frames
+                    else:
+                        current_state = "jumping"
+                        current_frames = jump_frames
+                    frame_index = 0
+                    jump_velocity = -30  # Reset velocity for the jump
+                if event.key == pygame.K_SPACE:
+                    # Calculate the gun's tip position
+                    gun_x = player_x + (frame.get_width() // 2 if facing_right else -frame.get_width() // 2) - (gun_image.get_width() // 2)
+                    gun_y = player_y - frame.get_height() // 6
+                    bullet_x = gun_x + (gun_image.get_width() if facing_right else 0)
+                    bullet_y = gun_y + gun_image.get_height() // 2.5
+                    direction = 1 if facing_right else -1
+                    bullets.append(Bullet(bullet_x, bullet_y, direction))
 
         if is_jumping:
-            player_y += jump_velocity
+            player_dy += jump_velocity
             jump_velocity += gravity
-            if player_y >= screen_height // 2 + OFFSET_Y:  # Reset when hitting the ground
+            if player_y + player_dy >= screen_height // 2 + OFFSET_Y:  # Reset when hitting the ground
                 player_y = screen_height // 2 + OFFSET_Y
                 is_jumping = False
                 jump_count = 0
-                jump_velocity = -22
+                jump_velocity = -30
+                player_dy = 0
 
+        # Create hitboxes for player and monsters
+        player_rect = pygame.Rect(player_x - idle_frames[0].get_width() // 2, player_y - idle_frames[0].get_height() // 2, idle_frames[0].get_width(), idle_frames[0].get_height())
+        monster_rects = [pygame.Rect(monster.x, monster.y, monster.image.get_width(), monster.image.get_height()) for monster in monsters]
 
-        if is_jumping:
-            player_y += jump_velocity
-            jump_velocity += gravity
-            if player_y >= screen_height // 2 + OFFSET_Y:  # Reset when hitting the ground
-                player_y = screen_height // 2 + OFFSET_Y
-                is_jumping = False
-                jump_count = 0
-                jump_velocity = -22
+        # Check for collision with collidable tiles
+        player_rect.x += player_dx
+        player_rect.y += player_dy
+        for tile_rect in collidable_tiles:
+            if player_rect.colliderect(tile_rect):
+                if player_dx > 0:  # Moving right
+                    player_rect.right = tile_rect.left
+                elif player_dx < 0:  # Moving left
+                    player_rect.left = tile_rect.right
+                if player_dy > 0:  # Moving down
+                    player_rect.bottom = tile_rect.top
+                    is_jumping = False
+                    jump_count = 0
+                    jump_velocity = -30
+                elif player_dy < 0:  # Moving up
+                    player_rect.top = tile_rect.bottom
+                player_dx = 0
+                player_dy = 0
+
+            for monster_rect in monster_rects:
+                if monster_rect.colliderect(tile_rect):
+                    # Reverse monster direction on collision
+                    monster = monsters[monster_rects.index(monster_rect)]
+                    monster.direction = (-monster.direction[0], -monster.direction[1])
+
+        # Update player position
+        player_x = player_rect.centerx
+        player_y = player_rect.centery
+
+        # Check for collision with monsters
+        for monster_rect in monster_rects:
+            if player_rect.colliderect(monster_rect):
+                health -= 2
+                if health < 0:
+                    health = 0  # Ensure health doesn't go below 0
+
+        # Move and draw bullets
+        for bullet in bullets[:]:
+            bullet.move()
+            bullet.draw()
+            if bullet.x < 0 or bullet.x > screen_width:
+                bullets.remove(bullet)
+            else:
+                bullet_rect = pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)
+                for monster in monsters:
+                    monster_rect = pygame.Rect(monster.x, monster.y, monster.image.get_width(), monster.image.get_height())
+                    if bullet_rect.colliderect(monster_rect):
+                        monster.hit()
+                        bullets.remove(bullet)
+                        if monster.health <= 0:
+                            monsters.remove(monster)
+                        break
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -348,6 +468,10 @@ def player():
             frame_index = (frame_index + 1) % len(current_frames)
             frame_timer = 0
 
+        if health == 0:
+            player()
+            health = 350
+
         # Render the current animation frame
         if current_frames:
             frame = current_frames[frame_index]
@@ -358,8 +482,29 @@ def player():
                 (player_x - frame.get_width() // 2, player_y - frame.get_height() // 2)
             )
 
+            # Calculate gun position
+            gun_x = player_x + (frame.get_width() // 2 if facing_right else -frame.get_width() // 2) - (gun_image.get_width() // 2)
+            gun_y = player_y - frame.get_height() // 6
+
+            # Flip gun image if facing left
+            gun_to_blit = gun_image if facing_right else pygame.transform.flip(gun_image, True, False)
+
+            # Blit gun image
+            screen.blit(gun_to_blit, (gun_x, gun_y))
+
         pygame.display.update()
         clock.tick(30)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
