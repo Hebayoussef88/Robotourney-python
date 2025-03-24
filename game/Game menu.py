@@ -5,7 +5,7 @@ import sys
 from pytmx import load_pygame
 
 from pygame.display import get_window_size
-from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,)
+from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,K_z)
 
 pygame.init()
 
@@ -236,6 +236,7 @@ def player():
     walk_frames = load_animation('adam_walk_1-sheet.png', 410, 998)
     jump_frames = load_animation('adam_jump-sheet.png', 416, 892)
     double_jump_frames = load_animation('adam_double-sheet.png', 600, 797)
+    shop_animation_frames = load_animation('market.png', 600, 797)
 
     map_file = "tilemap.tmx"
 
@@ -273,6 +274,14 @@ def player():
 
         keys = pygame.key.get_pressed()
 
+        health = 350
+
+        pygame.draw.rect(screen, "red", (20, 20, 350, 50))
+        pygame.draw.rect(screen, "green", (20, 20, health, 50))
+
+
+
+
         # Movement logic
         if keys[pygame.K_d]:  # Move right
             current_state = "walking"
@@ -307,6 +316,7 @@ def player():
                     current_frames = jump_frames
                 frame_index = 0
                 jump_velocity = -22  # Reset velocity for the jump
+
 
         if is_jumping:
             player_y += jump_velocity
