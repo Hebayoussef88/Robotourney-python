@@ -27,6 +27,67 @@ tmx_data = load_pygame("tilemap.tmx")
 
 clock = pygame.time.Clock()
 
+def intro():
+    import pygame
+    import os
+    import sys
+    import cv2
+
+    from pygame.display import get_window_size
+    from pygame.locals import (K_w, K_s, K_d, K_a, K_ESCAPE, K_SPACE, KEYDOWN, QUIT,)
+
+    global screen, mute_state
+
+    pygame.init()
+
+    window_size = (1200, 672)
+
+    sprite_sheet = pygame.image.load('adam_walk_1-sheet.png')
+
+    intro = "intro video.mp4"
+    cap = cv2.VideoCapture(intro)
+
+    pygame.display.set_caption("chronochills")
+    logo = pygame.image.load("chronochills logo.png")
+    logo = pygame.transform.scale(logo, (550, 300))
+    pygame.display.set_icon(logo)
+
+    running = True
+
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Get the video's FPS
+    delay = int(1000 / fps)  # Calculate the frame delay
+
+    while running:
+        ret, frame = cap.read()
+        if not ret:  # Exit the loop if the video ends
+            break
+
+        # Frame processing
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate frame
+        frame = cv2.flip(frame, 0)  # Flip vertically
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+        frame_surface = pygame.surfarray.make_surface(frame)
+        frame_surface = pygame.transform.scale(frame_surface, window_size)
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == QUIT:  # Close window
+                cap.release()
+                pygame.quit()
+                sys.exit()
+
+        # Draw and display frame
+        screen.blit(frame_surface, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(delay)
+
+    # Add this after the video loop
+    cap.release()  # Release the video file
+
+intro()
+
+
+
 def load_tilemap(map_file):
     """Load and draw the tilemap."""
     tmx_data = load_pygame(map_file)
