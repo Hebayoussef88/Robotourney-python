@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pytmx import load_pygame
 import random
+import time
 
 from pygame.display import get_window_size
 from pygame.locals import (K_w,K_s,K_d,K_a,K_ESCAPE,KEYDOWN,QUIT,K_z, KSCAN_ESCAPE)
@@ -326,17 +327,11 @@ class Monster:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.speed = 3
+        self.speed = 4.7
         self.direction = random.choice([(self.speed, 0), (-self.speed, 0), (0, self.speed), (0, -self.speed)])
         self.image = pygame.image.load("monster.png")
         self.image = pygame.transform.scale(self.image, (150, 150))
         self.health = 3
-
-    def move(self):
-        if random.randint(0, 50) == 0:  # Change direction randomly
-            self.direction = random.choice([(self.speed, 0), (-self.speed, 0), (0, self.speed), (0, -self.speed)])
-        self.x += self.direction[0]
-        self.y += self.direction[1]
         
         # Keep the monster within the screen bounds
         self.x = max(0, min(screen_width - 250, self.x))
@@ -542,6 +537,10 @@ def player():
     max_num = 6
     min_distance = 200  # Minimum distance between player and monster
 
+    total_spawned_monsters = 2  # Start with 2 monsters
+    defeated_monsters = 0
+   
+    
     # Function to generate a valid monster position
     def generate_monster_position():
         while True:
@@ -552,7 +551,7 @@ def player():
                 return x, y
 
     # Create "monster_num" monsters at valid positions
-    monsters = [Monster(*generate_monster_position()) for _ in range(monster_num)]
+    monsters = [Monster(*generate_monster_position()) for _ in range(2)]
 
     # Load tilemap and collidable tiles
     tilemap = load_pygame(map_file)
@@ -579,8 +578,12 @@ def player():
         load_tilemap(map_file)
 
         for monster in monsters:
-            monster.move()
             monster.draw()
+            dx = player_x - monster.x
+            dy = player_y - monster.y
+            dist = max(1, (dx ** 2 + dy ** 2) ** 0.5)
+            monster.x += monster.speed * dx / dist
+            monster.y += monster.speed * dy / dist
 
         keys = pygame.key.get_pressed()
 
@@ -681,8 +684,11 @@ def player():
         player_y = player_rect.centery
 
         # Check for collision with monsters
+        # Check for collision with monsters
+        # Check for collision with monsters
         for monster_rect in monster_rects:
-            if player_rect.colliderect(monster_rect):
+            if player_rect.colliderect(monster_rect):  # Only apply pushback if there is a collision
+                # Reduce health
                 health -= 2
                 current_state = "hit"
                 current_frames = hit_frames
@@ -690,16 +696,51 @@ def player():
                 hit_animation_playing = True
                 hit_animation_done = False
 
-                if hit_animation_playing:
-                    player_x += 10
-                if hit_animation_playing and facing_right:
-                    player_x -= 10
+                # Get the monster causing the collision
+                monster = monsters[monster_rects.index(monster_rect)]
+
+                # Calculate pushback direction
+                pushback_x = player_x - monster.x
+                pushback_y = player_y - monster.y
+                pushback_distance = 50  # Distance to push the player back
+                pushback_magnitude = max(1, (pushback_x ** 2 + pushback_y ** 2) ** 0.5)
+                pushback_x = (pushback_x / pushback_magnitude) * pushback_distance
+                pushback_y = (pushback_y / pushback_magnitude) * pushback_distance
+
+                # Apply pushback
+                player_x += pushback_x
+                player_y += pushback_y
+
+                # Clamp player position to screen boundaries
+                player_x = max(0, min(player_x, screen_width - idle_frames[0].get_width()))
+                player_y = max(0, min(player_y, screen_height - idle_frames[0].get_height()))
+
+                # Ensure health doesn't go below 0
                 if health < 0:
-                    health = 0  # Ensure health doesn't go below 0
+                    health = 0
                     if health == 0:
                         current_state = "hidden"
                         current_frames = hidden
                         show_losing_page()
+
+
+
+        if health < 0:
+            health = 0  # Ensure health doesn't go below 0
+            if health == 0:
+                current_state = "hidden"
+                current_frames = hidden
+                show_losing_page()
+
+        last_hit_time = 0  # Initialize a variable to track the last hit time
+        hit_cooldown = 1  # Cooldown in seconds
+
+# Inside the collision handling logic
+        current_time = time.time()
+        if current_time - last_hit_time > hit_cooldown:
+            last_hit_time = current_time
+    # Apply pushback and reduce health
+
 
         # Move and draw bullets ------------------------------------------------------------------------------------------------------------
         for bullet in bullets[:]:
@@ -719,14 +760,18 @@ def player():
                             pass
 
                         if monster.health <= 0:
-                            monsters.remove(monster)
-                            # Spawn two more monsters when one is removed, if max_num > 0
-                            if max_num > 0:
-                                for _ in range(1):
-                                    monsters.append(Monster(*generate_monster_position()))
-                                    max_num -= 1
-                                    if max_num == 0:
-                                        show_winning_page()
+                           monsters.remove(monster)
+                           defeated_monsters += 1
+
+                           # Check if all six monsters have been defeated
+                           if defeated_monsters == 14:
+                               show_winning_page()
+
+                           # Spawn two more monsters if less than six have been spawned
+                           if len(monsters) == 0 and total_spawned_monsters < 14:
+                               monsters.extend([Monster(*generate_monster_position()) for _ in range(2)])
+                               total_spawned_monsters += 2
+   
         # -----------------------------------------------------------------------------------------------------------------------------------
 
         for event in pygame.event.get():
