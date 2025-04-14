@@ -19,6 +19,7 @@ main_menu = True
 return_to_main_menu = False
 running10 = False
 options_clickable = True
+level_2 = False
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 
@@ -27,6 +28,170 @@ tmx_data = load_pygame("tilemap.tmx")
 # Function to render the map
 
 clock = pygame.time.Clock()
+
+class Bullet:
+    def __init__(self, x, y, direction):
+        self.x = x
+        self.y = y
+        self.speed = 10
+        self.direction = direction
+        self.width = 30
+        self.height = 15
+        self.color = (0, 255, 255)  # Blue color
+
+    def move(self):
+        self.x += self.speed * self.direction
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+
+def show_losing_page():
+    """Display the losing page."""
+    global screen, level_2
+
+    pygame.init()
+
+    # Load losing text
+    font1 = pygame.font.Font('Double Pixel-7 400.ttf', 160)
+    losing_text1 = font1.render("You Lost!", True, (255, 0, 0))
+
+    reset1 = pygame.image.load("reset.png")
+    reset1 = pygame.transform.scale(reset1, (200, 100))  # Adjust size as needed
+
+    # Button position and hitbox
+    button_pos1001 = (screen_width // 2 - reset1.get_width() // 2, screen_height // 2)
+    button_rect1001 = pygame.Rect(button_pos1001, reset1.get_size())
+
+    running100 = True
+    while running100:
+        screen.fill((0, 0, 0))
+        screen.blit(losing_text1, (screen_width // 2 - losing_text1.get_width() // 2, screen_height // 4))
+        screen.blit(reset1, button_pos1001)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect1001.collidepoint(event.pos):
+                    player()
+                    running100 = False
+
+        pygame.display.flip()
+
+def show_losing_page2():
+    """Display the losing page."""
+    global screen
+
+    pygame.init()
+
+    # Load losing text
+    font = pygame.font.Font('Double Pixel-7 400.ttf', 160)
+    losing_text = font.render("You Lost!", True, (255, 0, 0))
+
+    reset = pygame.image.load("reset.png")
+    reset = pygame.transform.scale(reset, (200, 100))  # Adjust size as needed
+
+    # Button position and hitbox
+    button_pos100 = (screen_width // 2 - reset.get_width() // 2, screen_height // 2)
+    button_rect100 = pygame.Rect(button_pos100, reset.get_size())
+
+    running1000 = True
+    while running1000:
+        screen.fill((0, 0, 0))
+        screen.blit(losing_text, (screen_width // 2 - losing_text.get_width() // 2, screen_height // 4))
+        screen.blit(reset, button_pos100)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect100.collidepoint(event.pos):
+                    level2_main()
+                    running100 = False
+            if level_2 == False:
+                return running1000
+        pygame.display.flip()
+
+def show_winning_page():
+    """Display the winning page."""
+    global screen
+
+    # Load winning text
+    font1 = pygame.font.Font('Double Pixel-7 400.ttf', 160)
+    winning_text = font1.render("You won!", True, (0, 255, 0))
+
+    next_level_button = pygame.image.load("next_level.png")
+    next_level_button = pygame.transform.scale(next_level_button, (200, 100))  # Adjust size as needed
+
+    # Button position and hitbox
+    button_pos = (screen_width // 2 - next_level_button.get_width() // 2, screen_height // 2)
+    button_rect = pygame.Rect(button_pos, next_level_button.get_size())
+
+    running100 = True
+    while running100:
+        screen.fill((0, 0, 0))
+        screen.blit(winning_text, (screen_width // 2 - winning_text.get_width() // 2, screen_height // 4))
+        screen.blit(next_level_button, button_pos)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    level2()
+                    running100 = False  # Exit the loop after transitioning to the next level
+
+        pygame.display.flip()
+
+def pause_menu():
+    """Display the pause menu and handle events."""
+    global screen, main_menu, return_to_main_menu
+
+    # Load pause menu text
+    font = pygame.font.Font('Double Pixel-7 400.ttf', 80)
+    pause_text = font.render("Paused", True, (255, 255, 255))
+
+    # Load resume button image
+    resume_button = pygame.image.load("resume.png")
+    resume_button = pygame.transform.scale(resume_button, (200, 100))  # Adjust size as needed
+
+    # Load back to menu button image
+    back_to_menu_button = pygame.image.load("back_to_menu.png")
+    back_to_menu_button = pygame.transform.scale(back_to_menu_button, (200, 100))  # Adjust size as needed
+
+    # Button positions and hitboxes
+    resume_button_pos = (screen_width // 2 - resume_button.get_width() // 2, screen_height // 2)
+    resume_button_rect = pygame.Rect(resume_button_pos, resume_button.get_size())
+
+    back_to_menu_button_pos = (screen_width // 2 - back_to_menu_button.get_width() // 2, screen_height // 2 + resume_button.get_height() + 65)
+    back_to_menu_button_rect = pygame.Rect(back_to_menu_button_pos, back_to_menu_button.get_size())
+
+    running = True
+    while running:
+        screen.fill((0, 0, 0))
+        screen.blit(pause_text, (screen_width // 2 - pause_text.get_width() // 2, screen_height // 4))
+        screen.blit(resume_button, resume_button_pos)
+        screen.blit(back_to_menu_button, back_to_menu_button_pos)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False  # Exit the pause menu
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if resume_button_rect.collidepoint(event.pos):
+                    running = False  # Exit the pause menu
+                elif back_to_menu_button_rect.collidepoint(event.pos):
+                    # Set flags to return to the main menu
+                    main_menu = True
+                    return_to_main_menu = True
+                    running = False  # Exit the pause menu loop
+
+        pygame.display.flip()
+        pygame.time.wait(10)
+
 
 def intro():
     import pygame
@@ -86,6 +251,8 @@ def intro():
     cap.release()  # Release the video file
 
 intro()
+
+
 
 
 
@@ -283,45 +450,502 @@ def play():
     cap.release()# Release the video file
     player()
 
-def level2():
-    global screen
-    pygame.init()
+class Boss:
+    def __init__(self, x, y, screen):
+        self.screen = screen
+        self.x = x  # Image position
+        self.y = y  # Image position
+        self.rect_x = x  # Rect position
+        self.rect_y = y  # Rect position
+        self.speed = 20
+        self.boss_image = pygame.image.load("boss.png")
+        self.original_image = pygame.transform.scale(self.boss_image, (280, 300))  # Store the original image
+        self.boss_image = self.original_image.copy()  # Copy for transformations
+        self.health = 90
+        self.rolling = True
+        self.direction = 1
+        self.angle = 0
+        self.on_ground = False
+        self.rotated_rect = None
+        self.Mask = None
+        self.rect_scale_x = 1.0  # Default scaling factor for the rect
+        self.mask_scale_x = 1.0  # Default scaling factor for the mask
 
-    font = pygame.font.Font('Double Pixel-7 400.ttf', 120)
-    coming_soon = font.render("Level 2 is coming soon!", True, (255, 0, 0))
+        # Initialize rotated rect and mask
+        self.update_rotated_rect_and_mask()
 
-    running100 = True
-    while running100:
-        screen.fill((0, 0, 0))
-        screen.blit(coming_soon, (screen_width // 2 - coming_soon.get_width() // 2, screen_height // 3))
+    def update_rotated_rect_and_mask(self):
+        """Update the rotated rect, mask, and image size."""
+        # Scale the boss image to match the rect size
+        scaled_width = int(self.original_image.get_width() * self.rect_scale_x)
+        scaled_height = int(self.original_image.get_height() * self.rect_scale_x)
+        self.boss_image = pygame.transform.scale(self.original_image, (scaled_width, scaled_height))
 
+        # Rotate the boss image
+        rotated_image = pygame.transform.rotate(self.boss_image, self.angle)
+
+        # Update the rotated rect with scaling and offsets
+        self.rotated_rect = rotated_image.get_rect(center=(self.rect_x, self.rect_y))
+
+        # Update the mask with scaling
+        self.Mask = pygame.mask.from_surface(rotated_image)
+
+    def move_rect_and_mask(self, offset_x, offset_y):
+        self.rect_x += offset_x
+        self.rect_y += offset_y
+        self.x = self.rect_x  # Synchronize image position with rect
+        self.y = self.rect_y  # Synchronize image position with rect
+        print(f"Rect position updated: rect_x={self.rect_x}, rect_y={self.rect_y}")  # Debug
+        self.update_rotated_rect_and_mask()
+
+    def phase1(self):
+        """Handle the boss's movement and behavior in phase 1."""
+        if not self.on_ground:
+            ground_level = screen_height - self.boss_image.get_height() + 50  # Move boss closer to the ground
+            self.rect_y += 10  # Move the rect down
+            self.rect_x += 10  # Move the rect right
+            if self.rect_y >= ground_level:
+                self.rect_y = ground_level
+                self.on_ground = True
+
+        if self.on_ground and self.rolling:
+            self.rect_x += self.speed * self.direction  # Move the rect horizontally
+
+        # Reverse direction if the rect hits the screen boundaries
+            if self.rotated_rect.left <= 0:
+                self.rect_x = self.rotated_rect.width // 2
+                self.direction *= -1
+            elif self.rotated_rect.right >= screen_width:
+                self.rect_x = screen_width - self.rotated_rect.width // 2
+                self.direction *= -1
+
+        # Rotate the boss only when rolling
+            if self.rolling:
+                self.angle += 10
+
+        # Stop rolling if health is low
+            if self.health <= 57:
+                self.rolling = False
+
+    # Update the rotated rect and mask after movement or rotation
+        self.update_rotated_rect_and_mask()
+
+
+
+
+
+    def draw(self):
+        # Rotate the boss image
+        rotated_image = pygame.transform.rotate(self.boss_image, self.angle)
+
+        # Draw the rotated image on the screen
+        self.screen.blit(rotated_image, self.rotated_rect.topleft)
+
+        # Draw the rotated_rect as a red rectangle
+        print(f"Drawing rect at: {self.rotated_rect.topleft}")  # Debug
+
+        # Visualize the mask as a semi-transparent overlay
+        mask_surface = self.Mask.to_surface(setcolor=(0, 0, 0, 0), unsetcolor=(0, 0, 0, 0))  # Green with transparency
+        self.screen.blit(mask_surface, self.rotated_rect.topleft)
+
+    def hit(self):
+        self.health -= 8
+
+
+
+
+
+
+    
+
+
+
+
+
+
+boss = Boss(300, 0, screen)
+# Scale the rect to 1.5x on the x-axis
+boss.rect_scale_x = 0.8  # Increase size by 50%
+# Scale the rectangle dynamically
+boss.update_rotated_rect_and_mask()
+
+
+
+
+def level2_main():
+    """Main game loop handling animations, movement, and events, including double jumping."""
+    global screen, fullscreen, return_to_main_menu, boss, main_menu
+
+    # Screen settings
+    screen_width, screen_height = 1200, 672
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("level 1")
+    if fullscreen:
+        screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode((screen_width, screen_height))
+
+    clock = pygame.time.Clock()
+
+    # Load animations
+    idle_frames = load_animation('adam_idle-sheet.png', 420, 998)
+    walk_frames = load_animation('adam_walk_1-sheet.png', 410, 998)
+    jump_frames = load_animation('adam_jump-sheet.png', 416, 892)
+    double_jump_frames = load_animation('adam_double-sheet.png', 600, 797)
+    hit_frames = load_animation('adam_hit_sheet.png', 870, 986, scale_factor=0.15)
+    hidden = load_animation('lose play.png', 870, 986)
+
+
+    music = "level 2.mp3"
+
+    pygame.mixer.init()
+    pygame.mixer.music.load(music)
+    pygame.mixer.music.play()
+    if mute_state:
+        pygame.mixer.music.set_volume(1)
+    else:
+        pygame.mixer.music.set_volume(0)
+
+    # Offset to move spritesheets down
+    OFFSET_Y = 200
+
+    # Player position and movement settings
+    player_x = screen_width // 2
+    player_y = screen_height // 2 + OFFSET_Y
+    player_speed = 7
+    jump_velocity = -30  # Increased jump velocity for faster jump
+    gravity = 2  # Increased gravity for faster fall
+    is_jumping = False
+    jump_count = 0  # Tracks the number of jumps
+    max_jumps = 2  # Limit to double jump
+    facing_right = True  # Tracks sprite direction
+
+    # Initial state
+    current_frames = idle_frames
+    current_state = "idle"
+    frame_index = 0
+    frame_timer = 0
+    hit_frame_timer = 0
+    hit_animation_playing = False
+    hit_animation_done = False
+
+    # Load background and icon
+    logo = pygame.image.load("chronochills logo.png")
+    logo = pygame.transform.scale(logo, (550, 300))
+    pygame.display.set_icon(logo)
+
+    background_image = pygame.image.load("level 2.png")
+
+    health = 350  # Initialize health
+
+
+
+    # Create "monster_num" monsters at v
+
+    # Load tilemap and collidable tiles
+   
+    # Load gun image
+    gun_image = pygame.image.load("gun.png")
+    gun_image = pygame.transform.scale(gun_image, (70, 90))  # Adjust the size as needed
+
+    bullets = []
+    max_bullets = 1  # Limit the number of bullets
+
+    frame = current_frames[frame_index]
+    player_mask = pygame.mask.from_surface(frame)
+
+    player_mask_surface = player_mask.to_surface()
+    boss_mask_surface = boss.Mask.to_surface()
+    
+
+
+    # Main loop
+    while True:
+        if return_to_main_menu:
+            return_to_main_menu = False
+            break
+        if main_menu:
+            main_menu = False
+            running5 = True
+        screen.blit(background_image, (0, 0))
+
+        boss.phase1()
+        boss.draw()
+
+
+
+        keys = pygame.key.get_pressed()
+
+        # Draw health bar
+        pygame.draw.rect(screen, "red", (20, 20, 350, 50))
+        pygame.draw.rect(screen, "green", (20, 20, health, 50))
+
+        pygame.draw.rect(screen, "red", (210, 130, 810, 10))
+        pygame.draw.rect(screen, "green", (210, 130, boss.health * 9, 10))
+
+        if keys[pygame.K_ESCAPE]:
+            pause_menu()
+        
+        # Movement logic
+        player_dx = 0
+        player_dy = 0
+        if keys[pygame.K_d] and not hit_animation_playing:  # Move right
+            current_state = "walking"
+            current_frames = walk_frames
+            frame_index %= len(current_frames)
+            player_dx = player_speed
+            facing_right = True
+        elif keys[pygame.K_a] and not hit_animation_playing:  # Move left
+            current_state = "walking"
+            current_frames = walk_frames
+            frame_index %= len(current_frames)
+            player_dx = -player_speed
+            facing_right = False
+        elif not is_jumping and not hit_animation_playing:  # Idle state
+            current_state = "idle"
+            current_frames = idle_frames
+            frame_index %= len(current_frames)
+
+        # Jump logic with double jump
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running100 = False  # Exit the loop when ESC is pressed
+            if event.type == pygame.KEYDOWN and not hit_animation_playing:
+                if event.key == pygame.K_w and jump_count < max_jumps:
+                    is_jumping = True
+                    jump_count += 1
+                    if jump_count == 2:  # Use double jump animation for the second jump
+                        current_state = "double_jumping"
+                        current_frames = double_jump_frames
+                    else:
+                        current_state = "jumping"
+                        current_frames = jump_frames
+                    frame_index = 0
+                    jump_velocity = -30  # Reset velocity for the jump
+                if event.key == pygame.K_SPACE and len(bullets) < max_bullets:  # Limit the number of bullets
+                    # Calculate the gun's tip position
+                    gun_x = player_x + (frame.get_width() // 2 if facing_right else -frame.get_width() // 2) - (gun_image.get_width() // 2)
+                    gun_y = player_y - frame.get_height() // 6
+                    bullet_x = gun_x + (gun_image.get_width() if facing_right else 0)
+                    bullet_y = gun_y + gun_image.get_height() // 2.5
+                    direction = 1 if facing_right else -1
+                    bullets.append(Bullet(bullet_x, bullet_y, direction))
 
-        pygame.display.flip()
+        if is_jumping:
+            player_dy += jump_velocity
+            jump_velocity += gravity
+            if player_y + player_dy >= screen_height // 2 + OFFSET_Y:  # Lower the player by 20 pixels
+                player_y = screen_height // 2 + OFFSET_Y
+                is_jumping = False
+                jump_count = 0
+                jump_velocity = -30
+                player_dy = 0
+
+
+        # Create hitboxes for player and monsters
+        player_rect = pygame.Rect(player_x - idle_frames[0].get_width() // 2, player_y - idle_frames[0].get_height() // 2, idle_frames[0].get_width(), idle_frames[0].get_height())
+       
+
+        # Check for collision with collidable tiles
+        player_rect.x += player_dx
+        player_rect.y += player_dy
+
+
+        # Update player position
+        player_x = player_rect.centerx
+        player_y = player_rect.centery
+
+        player_x = max(0, min(player_rect.centerx, screen_width - idle_frames[0].get_width()))
 
 
 
+        if health < 0:
+            health = 0  # Ensure health doesn't go below 0
+            if health == 0:
+                current_state = "hidden"
+                current_frames = hidden
+                show_losing_page2()
 
-class Bullet:
-    def __init__(self, x, y, direction):
-        self.x = x
-        self.y = y
-        self.speed = 10
-        self.direction = direction
-        self.width = 30
-        self.height = 15
-        self.color = (0, 255, 255)  # Blue color
+        last_hit_time = 0  # Initialize a variable to track the last hit time
+        hit_cooldown = 1  # Cooldown in seconds
 
-    def move(self):
-        self.x += self.speed * self.direction
+# Inside the collision handling logic
+        current_time = time.time()
+        if current_time - last_hit_time > hit_cooldown:
+            last_hit_time = current_time
 
-    def draw(self):
-        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+        if boss.Mask is None:
+    # Initialize or assign a valid mask to boss.Mask
+            boss.Mask = pygame.mask.from_surface(boss.rotated_rect)  # Example initialization
+
+    
+        offset1 = (
+            int(player_rect.left - boss.rotated_rect.left),
+            int(player_rect.top - boss.rotated_rect.top)
+        )
+        if player_mask.overlap(boss.Mask, offset1):
+            # The error in the line `if player_mask.overlap(boss.Mask, offset1):` is that `player_mask` is not defined anywhere in the code.  
+            # To fix this, you need to create a mask for the player sprite using `pygame.mask.from_surface()`.
+
+            # Example Fix:
+            # Assuming `frame` is the current player sprite being rendered:
+            player_mask = pygame.mask.from_surface(frame)
+
+            # Ensure this line is placed before the collision check:
+            if player_mask.overlap(boss.Mask, offset1):
+               health -= 3.5
+
+    # Apply pushback and reduce health
+
+
+        for bullet in bullets[:]:
+            bullet.width = 70
+            bullet.height = 70
+            bullet.move()
+            bullet.draw()
+            if bullet.x < 0 or bullet.x > screen_width:
+                bullets.remove(bullet)
+
+            bullet_rect = pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)
+
+            # Check for pixel-perfect collision
+            offset = (int(bullet_rect.x - boss.rotated_rect.x), int(bullet_rect.y - boss.rotated_rect.y))
+            if boss.Mask.overlap(pygame.mask.from_surface(pygame.Surface((bullet.width, bullet.height))), offset):
+                boss.hit()
+                if bullet in bullets:
+                    bullets.remove(bullet)
+
+            
+
+   
+        # -----------------------------------------------------------------------------------------------------------------------------------
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        # Animation frame update
+        frame_timer += 1
+        hit_frame_timer += 1
+        if hit_animation_playing:
+            if hit_frame_timer >= 2:  # Change hit frame every 3 ticks (faster)
+                frame_index = (frame_index + 1) % len(current_frames)
+                hit_frame_timer = 0
+        else:
+            # Fix for the "integer modulo by 0" error in the animation frame update logic.
+            if current_frames:  # Ensure current_frames is not empty
+                if frame_timer >= 5:  # Change frame every 5 ticks
+                    frame_index = (frame_index + 1) % len(current_frames)  # Safe modulo operation
+                    frame_timer = 0
+            else:
+                print("Error: current_frames is empty. Cannot update animation frames.")
+
+        # Render the current animation frame
+        if current_frames:
+            frame = current_frames[frame_index]
+            if not facing_right:  # Flip frame if facing left
+                frame = pygame.transform.flip(frame, True, False)
+            screen.blit(
+                frame,
+                (player_x - frame.get_width() // 2, player_y - frame.get_height() // 2)
+            )
+
+            # Calculate gun position
+            gun_x = player_x + (frame.get_width() // 2 if facing_right else -frame.get_width() // 2) - (gun_image.get_width() // 2)
+            gun_y = player_y - frame.get_height() // 6
+
+            # Flip gun image if facing left
+            gun_to_blit = gun_image if facing_right else pygame.transform.flip(gun_image, True, False)
+
+            # Blit gun image
+            screen.blit(gun_to_blit, (gun_x, gun_y))
+
+                 # Check if hit animation is done
+        if hit_animation_playing and frame_index == len(hit_frames) - 1:
+            hit_animation_playing = False
+            hit_animation_done = True
+
+        # Move player back after hit animation is done
+        
+
+        pygame.display.update()
+        clock.tick(30)
+
+level2_main()
+
+    
+
+def level2():
+    
+    import pygame
+    import os
+    import sys
+    import cv2
+
+    from pygame.display import get_window_size
+    from pygame.locals import (K_w, K_s, K_d, K_a, K_ESCAPE, K_SPACE, KEYDOWN, QUIT,)
+
+    global screen, mute_state
+
+    pygame.init()
+
+    window_size = (1200, 672)
+
+    sprite_sheet = pygame.image.load('adam_walk_1-sheet.png')
+
+    intro = "level 2 intro.mp4"
+    cap = cv2.VideoCapture(intro)
+
+    pygame.display.set_caption("level 2")
+    logo = pygame.image.load("chronochills logo.png")
+    logo = pygame.transform.scale(logo, (550, 300))
+    pygame.display.set_icon(logo)
+
+    pygame.mixer.music.load("level 2 intro.mp3")  # Replace with the actual audio file name
+    pygame.mixer.music.play()
+    if mute_state:
+        pygame.mixer.music.set_volume(1)  # Set volume to full if not muted
+    else:
+        pygame.mixer.music.set_volume(0)  # Mute the audio if mute_state is True
+   
+
+    running = True
+
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Get the video's FPS
+    delay = int(380 / fps)  # Calculate the frame delay
+
+    while running:
+        ret, frame = cap.read()
+        if not ret:  # Exit the loop if the video ends
+            level2_main()
+            break
+            
+
+        # Frame processing
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate frame
+        frame = cv2.flip(frame, 0)  # Flip vertically
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+        frame_surface = pygame.surfarray.make_surface(frame)
+        frame_surface = pygame.transform.scale(frame_surface, window_size)
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == QUIT:  # Close window
+                cap.release()
+                pygame.quit()
+                sys.exit()
+
+        # Draw and display frame
+        screen.blit(frame_surface, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(delay)
+
+    # Add this after the video loop
+    cap.release()  # Release the video file
+
+
 
 class Monster:
     def __init__(self, x, y):
@@ -344,121 +968,8 @@ class Monster:
         self.health -= 1
 
 
-def show_losing_page():
-    """Display the losing page."""
-    global screen
-
-    pygame.init()
-
-    # Load losing text
-    font = pygame.font.Font('Double Pixel-7 400.ttf', 160)
-    losing_text = font.render("You Lost!", True, (255, 0, 0))
-
-    reset = pygame.image.load("reset.png")
-    reset = pygame.transform.scale(reset, (200, 100))  # Adjust size as needed
-
-    # Button position and hitbox
-    button_pos100 = (screen_width // 2 - reset.get_width() // 2, screen_height // 2)
-    button_rect100 = pygame.Rect(button_pos, reset.get_size())
-
-    running100 = True
-    while running100:
-        screen.fill((0, 0, 0))
-        screen.blit(losing_text, (screen_width // 2 - losing_text.get_width() // 2, screen_height // 4))
-        screen.blit(reset, button_pos100)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect.collidepoint(event.pos):
-                    player()
-                    running100 = False
-
-        pygame.display.flip()
-
-def show_winning_page():
-    """Display the winning page."""
-    global screen
-
-    # Load winning text
-    font1 = pygame.font.Font('Double Pixel-7 400.ttf', 160)
-    winning_text = font1.render("You won!", True, (0, 255, 0))
-
-    next_level_button = pygame.image.load("next_level.png")
-    next_level_button = pygame.transform.scale(next_level_button, (200, 100))  # Adjust size as needed
-
-    # Button position and hitbox
-    button_pos = (screen_width // 2 - next_level_button.get_width() // 2, screen_height // 2)
-    button_rect = pygame.Rect(button_pos, next_level_button.get_size())
-
-    running100 = True
-    while running100:
-        screen.fill((0, 0, 0))
-        screen.blit(winning_text, (screen_width // 2 - winning_text.get_width() // 2, screen_height // 4))
-        screen.blit(next_level_button, button_pos)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect.collidepoint(event.pos):
-                    level2()
-                    running100 = False  # Exit the loop after transitioning to the next level
-
-        pygame.display.flip()
 
 
-def pause_menu():
-    """Display the pause menu and handle events."""
-    global screen, main_menu, return_to_main_menu
-
-    # Load pause menu text
-    font = pygame.font.Font('Double Pixel-7 400.ttf', 80)
-    pause_text = font.render("Paused", True, (255, 255, 255))
-
-    # Load resume button image
-    resume_button = pygame.image.load("resume.png")
-    resume_button = pygame.transform.scale(resume_button, (200, 100))  # Adjust size as needed
-
-    # Load back to menu button image
-    back_to_menu_button = pygame.image.load("back_to_menu.png")
-    back_to_menu_button = pygame.transform.scale(back_to_menu_button, (200, 100))  # Adjust size as needed
-
-    # Button positions and hitboxes
-    resume_button_pos = (screen_width // 2 - resume_button.get_width() // 2, screen_height // 2)
-    resume_button_rect = pygame.Rect(resume_button_pos, resume_button.get_size())
-
-    back_to_menu_button_pos = (screen_width // 2 - back_to_menu_button.get_width() // 2, screen_height // 2 + resume_button.get_height() + 65)
-    back_to_menu_button_rect = pygame.Rect(back_to_menu_button_pos, back_to_menu_button.get_size())
-
-    running = True
-    while running:
-        screen.fill((0, 0, 0))
-        screen.blit(pause_text, (screen_width // 2 - pause_text.get_width() // 2, screen_height // 4))
-        screen.blit(resume_button, resume_button_pos)
-        screen.blit(back_to_menu_button, back_to_menu_button_pos)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False  # Exit the pause menu
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if resume_button_rect.collidepoint(event.pos):
-                    running = False  # Exit the pause menu
-                elif back_to_menu_button_rect.collidepoint(event.pos):
-                    running = False  # Exit the pause menu and go back to the main menu
-                    main_menu = True
-                    return_to_main_menu = True
-                    options_clicked = False
-                    music = "hard-hitting-techno-track-for-intense-vibes-266980.mp3"
-
-
-        pygame.display.flip()
-        pygame.time.wait(10)
 
 
 
@@ -573,6 +1084,7 @@ def player():
     while True:
         if return_to_main_menu:
             return_to_main_menu = False
+            main_menu = True
             break
         screen.blit(background_image, (0, 0))
         load_tilemap(map_file)
@@ -683,6 +1195,8 @@ def player():
         player_x = player_rect.centerx
         player_y = player_rect.centery
 
+        player_x = max(0, min(player_rect.centerx, screen_width - idle_frames[0].get_width()))
+
         # Check for collision with monsters
         # Check for collision with monsters
         # Check for collision with monsters
@@ -765,6 +1279,7 @@ def player():
 
                            # Check if all six monsters have been defeated
                            if defeated_monsters == 14:
+                               pygame.mixer.music.stop()
                                show_winning_page()
 
                            # Spawn two more monsters if less than six have been spawned
