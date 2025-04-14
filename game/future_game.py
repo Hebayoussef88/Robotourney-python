@@ -29,6 +29,27 @@ tmx_data = load_pygame("tilemap.tmx")
 
 clock = pygame.time.Clock()
 
+class BossBullet:
+    def __init__(self, x, y, direction_x, direction_y):
+        self.x = x
+        self.y = y
+        self.speed = 7.5
+        self.direction_x = direction_x
+        self.direction_y = direction_y
+        self.image = pygame.image.load("fireball.png")  
+        self.image = pygame.transform.scale(self.image, (50, 50)) 
+        self.rect = self.image.get_rect(center=(self.x, self.y))  
+
+    def move(self):
+        """Move the bullet in the specified direction."""
+        self.x += self.speed * self.direction_x
+        self.y += self.speed * self.direction_y
+        self.rect.center = (self.x, self.y)  
+    def draw(self):
+        """Draw the bullet on the screen."""
+        screen.blit(self.image, self.rect.topleft)
+
+
 class Bullet:
     def __init__(self, x, y, direction):
         self.x = x
@@ -470,9 +491,39 @@ class Boss:
         self.Mask = None
         self.rect_scale_x = 1.0  # Default scaling factor for the rect
         self.mask_scale_x = 1.0  # Default scaling factor for the mask
+        self.boss_bullets = []  # List to store boss bullets
+        self.shoot_cooldown = 1000  # Cooldown in milliseconds
+        self.last_shot_time = 0 
 
         # Initialize rotated rect and mask
         self.update_rotated_rect_and_mask()
+
+    def shoot(self, player_x, player_y):
+        """Shoot a bullet towards the player."""
+        current_time = pygame.time.get_ticks()  # Get the current time in milliseconds
+        if current_time - self.last_shot_time > self.shoot_cooldown:
+            # Calculate direction towards the player
+            dx = player_x - self.rect_x
+            dy = player_y - self.rect_y
+            distance = max(1, (dx**2 + dy**2)**0.5)  # Avoid division by zero
+            direction_x = dx / distance
+            direction_y = dy / distance
+
+            # Create a new BossBullet
+            bullet = BossBullet(self.rect_x, self.rect_y, direction_x, direction_y)
+            self.boss_bullets.append(bullet)  # Add the bullet to the list
+            self.last_shot_time = current_time  # Update the last shot time
+
+    
+    def update_bullets(self):
+        """Update and draw bullets fired by the boss."""
+        for bullet in self.boss_bullets[:]:
+            bullet.move()  # Move the bullet
+            bullet.draw()  # Draw the bullet on the screen
+            # Remove bullets that go off-screen
+            if bullet.x < 0 or bullet.x > screen_width or bullet.y < 0 or bullet.y > screen_height:
+                self.boss_bullets.remove(bullet)
+
 
     def update_rotated_rect_and_mask(self):
         """Update the rotated rect, mask, and image size."""
@@ -529,6 +580,56 @@ class Boss:
 
     # Update the rotated rect and mask after movement or rotation
         self.update_rotated_rect_and_mask()
+
+
+
+    def phase2(self, player_x, player_y):
+        """Handle the boss's behavior in phase 2."""
+        # Move the boss back to the sky
+        target_y = 100  # Target position near the top of the screen
+        if self.rect_y > target_y:
+            self.rect_y -= 5  # Move upward by 5 pixels per frame
+
+        # Ensure the boss doesn't go above the target position
+        if self.rect_y < target_y:
+            self.rect_y = target_y
+            
+        left_edge = 50  # Left edge position
+        right_edge = screen_width - self.rotated_rect.width - 50
+
+        if not hasattr(self, "moving_right"):
+            self.moving_right = True  # Initialize direction
+        if not hasattr(self, "wait_timer"):
+            self.wait_timer = 0  # Initialize the wait timer
+
+        current_time = pygame.time.get_ticks()  # Get the current time
+
+        if self.wait_timer > 0:
+            # Boss is waiting; check if the wait time has passed
+            if current_time - self.wait_timer >= 1500:  # 1.5 seconds
+                self.wait_timer = 0  # Reset the timer
+        else:
+            if self.moving_right:
+                # Move to the right edge
+                if self.rect_x < right_edge:
+                    self.rect_x += 5  # Move right by 5 pixels per frame
+                else:
+                    self.moving_right = False  # Switch direction
+                    self.shoot(player_x, player_y)  # Shoot bullets
+                    self.wait_timer = current_time  # Start the wait timer
+            else:
+                # Move to the left edge
+                if self.rect_x > left_edge:
+                    self.rect_x -= 5  # Move left by 5 pixels per frame
+                else:
+                    self.moving_right = True  # Switch direction
+
+                    self.wait_timer = current_time  # Start the wait timer
+        self.shoot(player_x, player_y)  # Shoot bullets
+        self.update_bullets()  # Update and draw bullets
+        self.update_rotated_rect_and_mask()  # Ensure the boss's rect and mask are updated
+
+
 
 
 
@@ -669,8 +770,25 @@ def level2_main():
             running5 = True
         screen.blit(background_image, (0, 0))
 
-        boss.phase1()
+        if boss.health > 50:  # Phase 1
+            boss.phase1()
+        else:  # Phase 2
+            boss.phase2(player_x, player_y)
+
+
+            # Handle boss bullets
+            for bullet in boss.boss_bullets[:]:
+                bullet.move()
+                bullet.draw()
+
+                # Check for collision with the player
+                if player_rect.colliderect(bullet.rect):
+                    health -= 23
+                    boss.boss_bullets.remove(bullet)
+
         boss.draw()
+
+
 
 
 
@@ -796,8 +914,6 @@ def level2_main():
             if player_mask.overlap(boss.Mask, offset1):
                health -= 3.5
 
-    # Apply pushback and reduce health
-
 
         for bullet in bullets[:]:
             bullet.width = 70
@@ -808,6 +924,7 @@ def level2_main():
                 bullets.remove(bullet)
 
             bullet_rect = pygame.Rect(bullet.x, bullet.y, bullet.width, bullet.height)
+
 
             # Check for pixel-perfect collision
             offset = (int(bullet_rect.x - boss.rotated_rect.x), int(bullet_rect.y - boss.rotated_rect.y))
