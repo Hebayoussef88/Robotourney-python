@@ -629,6 +629,12 @@ class Boss:
         self.update_bullets()  # Update and draw bullets
         self.update_rotated_rect_and_mask()  # Ensure the boss's rect and mask are updated
 
+    def phase3(self):
+        self.boss_image = pygame.image.load("anger_boss.png")
+        self.boss_image = pygame.transform.scale(self.boss_image, (280, 300))  # Store the original image
+        self.original_image = pygame.transform.scale(self.boss_image, (280, 300))  # Store the original image
+        self.boss_image = self.original_image.copy()  # Copy for transformations
+
 
 
 
@@ -770,21 +776,22 @@ def level2_main():
             running5 = True
         screen.blit(background_image, (0, 0))
 
-        if boss.health > 50:  # Phase 1
+        if boss.health > 50:
             boss.phase1()
-        else:  # Phase 2
+        elif boss.health > 20:
             boss.phase2(player_x, player_y)
+        else:
+            boss.phase3()
 
+        #  This part should always run, no matter the phase:
+        for bullet in boss.boss_bullets[:]:
+            bullet.move()
+            bullet.draw()
 
-            # Handle boss bullets
-            for bullet in boss.boss_bullets[:]:
-                bullet.move()
-                bullet.draw()
+            if player_rect.colliderect(bullet.rect):
+                health -= 23
+                boss.boss_bullets.remove(bullet)
 
-                # Check for collision with the player
-                if player_rect.colliderect(bullet.rect):
-                    health -= 23
-                    boss.boss_bullets.remove(bullet)
 
         boss.draw()
 
