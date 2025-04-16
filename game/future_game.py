@@ -29,6 +29,65 @@ tmx_data = load_pygame("tilemap.tmx")
 
 clock = pygame.time.Clock()
 
+def finalle():
+    import pygame
+    import os
+    import sys
+    import cv2
+
+    from pygame.display import get_window_size
+    from pygame.locals import (K_w, K_s, K_d, K_a, K_ESCAPE, K_SPACE, KEYDOWN, QUIT,)
+
+    global screen, mute_state
+
+    pygame.init()
+
+    window_size = (1200, 672)
+
+    sprite_sheet = pygame.image.load('adam_walk_1-sheet.png')
+
+    intro = "final.mp4"
+    cap = cv2.VideoCapture(intro)
+
+    pygame.display.set_caption("level 2")
+    logo = pygame.image.load("chronochills logo.png")
+    logo = pygame.transform.scale(logo, (550, 300))
+    pygame.display.set_icon(logo)
+
+    running = True
+
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Get the video's FPS
+    delay = int(1000 / fps)  # Calculate the frame delay
+
+    while running:
+        ret, frame = cap.read()
+        if not ret:  # Exit the loop if the video ends
+            quit()
+
+        # Frame processing
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)  # Rotate frame
+        frame = cv2.flip(frame, 0)  # Flip vertically
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+        frame_surface = pygame.surfarray.make_surface(frame)
+        frame_surface = pygame.transform.scale(frame_surface, window_size)
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == QUIT:  # Close window
+                cap.release()
+                pygame.quit()
+                sys.exit()
+
+        # Draw and display frame
+        screen.blit(frame_surface, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(delay)
+
+    # Add this after the video loop
+    cap.release()  # Release the video file
+
+
+
 class BossBullet:
     def __init__(self, x, y, direction_x, direction_y):
         self.x = x
@@ -49,6 +108,25 @@ class BossBullet:
         """Draw the bullet on the screen."""
         screen.blit(self.image, self.rect.topleft)
 
+class BossBullet1:
+    def __init__(self, x, y, direction_x, direction_y):
+        self.x = x
+        self.y = y
+        self.speed = 10
+        self.direction_x = direction_x
+        self.direction_y = direction_y
+        self.image = pygame.image.load("fireball.png")  
+        self.image = pygame.transform.scale(self.image, (50, 50)) 
+        self.rect = self.image.get_rect(center=(self.x, self.y))  
+
+    def move(self):
+        """Move the bullet in the specified direction."""
+        self.x += self.speed * self.direction_x
+        self.y += self.speed * self.direction_y
+        self.rect.center = (self.x, self.y)  
+    def draw(self):
+        """Draw the bullet on the screen."""
+        screen.blit(self.image, self.rect.topleft)
 
 class Bullet:
     def __init__(self, x, y, direction):
@@ -493,7 +571,11 @@ class Boss:
         self.mask_scale_x = 1.0  # Default scaling factor for the mask
         self.boss_bullets = []  # List to store boss bullets
         self.shoot_cooldown = 1000  # Cooldown in milliseconds
+        self.shoot_cooldown1 = 370
         self.last_shot_time = 0 
+        self.rotating = False
+        self.rotation_speed = 5  # degrees per frame
+        self.rotation_count = 0  # Tracks how many degrees we've rotated
 
         # Initialize rotated rect and mask
         self.update_rotated_rect_and_mask()
@@ -511,6 +593,22 @@ class Boss:
 
             # Create a new BossBullet
             bullet = BossBullet(self.rect_x, self.rect_y, direction_x, direction_y)
+            self.boss_bullets.append(bullet)  # Add the bullet to the list
+            self.last_shot_time = current_time  # Update the last shot time
+
+    def shoot1(self, player_x, player_y):
+        """Shoot a bullet towards the player."""
+        current_time = pygame.time.get_ticks()  # Get the current time in milliseconds
+        if current_time - self.last_shot_time > self.shoot_cooldown1:
+            # Calculate direction towards the player
+            dx = player_x - self.rect_x
+            dy = player_y - self.rect_y
+            distance = max(1, (dx**2 + dy**2)**0.5)  # Avoid division by zero
+            direction_x = dx / distance
+            direction_y = dy / distance
+
+            # Create a new BossBullet
+            bullet = BossBullet1(self.rect_x, self.rect_y, direction_x, direction_y)
             self.boss_bullets.append(bullet)  # Add the bullet to the list
             self.last_shot_time = current_time  # Update the last shot time
 
@@ -629,12 +727,64 @@ class Boss:
         self.update_bullets()  # Update and draw bullets
         self.update_rotated_rect_and_mask()  # Ensure the boss's rect and mask are updated
 
-    def phase3(self):
+    
+
+    def phase3(self, player_x, player_y):
         self.boss_image = pygame.image.load("anger_boss.png")
         self.boss_image = pygame.transform.scale(self.boss_image, (280, 300))  # Store the original image
         self.original_image = pygame.transform.scale(self.boss_image, (280, 300))  # Store the original image
         self.boss_image = self.original_image.copy()  # Copy for transformations
 
+       
+        target_y = 100  # Target position near the top of the screen
+        if self.rect_y > target_y:
+            self.rect_y -= 5  # Move upward by 5 pixels per frame
+
+        # Ensure the boss doesn't go above the target position
+        if self.rect_y < target_y:
+            self.rect_y = target_y
+            
+        left_edge = 50  # Left edge position
+        right_edge = screen_width - self.rotated_rect.width - 50
+
+        if not hasattr(self, "moving_right"):
+            self.moving_right = True  # Initialize direction
+        if not hasattr(self, "wait_timer"):
+            self.wait_timer = 0  # Initialize the wait timer
+
+        current_time = pygame.time.get_ticks()  # Get the current time
+
+        if self.wait_timer > 0:
+            # Boss is waiting; check if the wait time has passed
+            if current_time - self.wait_timer >= 1500:  # 1.5 seconds
+                self.wait_timer = 0  # Reset the timer
+        else:
+            if self.moving_right:
+                # Move to the right edge
+                if self.rect_x < right_edge:
+                    self.rect_x += 5  # Move right by 5 pixels per frame
+                else:
+                    self.moving_right = False  # Switch direction
+                    self.shoot(player_x, player_y)  # Shoot bullets
+                    self.wait_timer = current_time  # Start the wait timer
+            else:
+                # Move to the left edge
+                if self.rect_x > left_edge:
+                    self.rect_x -= 5  # Move left by 5 pixels per frame
+                else:
+                    self.moving_right = True  # Switch direction
+
+                    self.wait_timer = current_time  # Start the wait timer
+        self.shoot1(player_x, player_y)  # Shoot bullets
+        self.update_bullets()  # Update and draw bullets
+        self.update_rotated_rect_and_mask()  # Ensure the boss's rect and mask are
+
+    def death(self):
+        self.rect_y += 20
+        for bullet in self.boss_bullets[:]:
+            self.boss_bullets.remove(bullet)
+
+            
 
 
 
@@ -764,6 +914,29 @@ def level2_main():
     player_mask_surface = player_mask.to_surface()
     boss_mask_surface = boss.Mask.to_surface()
     
+    # Load key images and scale
+    key1 = pygame.image.load("key1.png")
+    key1 = pygame.transform.scale(key1, (100, 100))
+    key2 = pygame.image.load("key2.png")
+    key2 = pygame.transform.scale(key2, (100, 100))
+    key3 = pygame.image.load("key3.png")
+    key3 = pygame.transform.scale(key3, (100, 100))
+
+    # Set key positions
+    key1_rect = key1.get_rect(topleft=(100, 500))
+    key2_rect = key2.get_rect(topleft=(300, 500))
+    key3_rect = key3.get_rect(topleft=(500, 500))
+
+    # Track key collection
+    key1_collected = False
+    key2_collected = False
+    key3_collected = False
+    collected_keys = 0
+
+    # Load and position the door
+    door = pygame.image.load("door.png")
+    door_rect = door.get_rect(topleft=(600, 200))
+    door_unlocked = False  # NEW FLAG
 
 
     # Main loop
@@ -778,10 +951,63 @@ def level2_main():
 
         if boss.health > 50:
             boss.phase1()
-        elif boss.health > 20:
+        elif boss.health > 30:
             boss.phase2(player_x, player_y)
         else:
-            boss.phase3()
+            boss.phase3(player_x, player_y)
+
+        if boss.health < 0:
+            boss.death()
+
+            # Update player rect each frame
+            player_rect = pygame.Rect(
+                player_x - idle_frames[0].get_width() // 2,
+                player_y - idle_frames[0].get_height() // 2,
+                idle_frames[0].get_width(),
+                idle_frames[0].get_height()
+            )
+
+            # KEY COLLECTION CHECKS
+            if not key1_collected and player_rect.colliderect(key1_rect):
+                key1_collected = True
+                collected_keys += 1
+
+            if not key2_collected and player_rect.colliderect(key2_rect):
+                key2_collected = True
+                collected_keys += 1
+
+            if not key3_collected and player_rect.colliderect(key3_rect):
+                key3_collected = True
+                collected_keys += 1
+
+            # DOOR UNLOCK TRIGGER
+            if collected_keys == 3:
+                door_unlocked = True
+
+            # DRAW UNCOLLECTED KEYS
+            if not key1_collected:
+                screen.blit(key1, key1_rect.topleft)
+            if not key2_collected:
+                screen.blit(key2, key2_rect.topleft)
+            if not key3_collected:
+                screen.blit(key3, key3_rect.topleft)
+
+            # DRAW DOOR IF UNLOCKED
+            if door_unlocked:
+                screen.blit(door, door_rect.topleft)
+
+                # DOOR COLLISION
+                if player_rect.colliderect(door_rect):
+                    finalle()
+
+
+                
+
+        
+
+
+
+                
 
         #  This part should always run, no matter the phase:
         for bullet in boss.boss_bullets[:]:
