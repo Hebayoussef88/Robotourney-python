@@ -34,11 +34,12 @@ def finalle():
     import os
     import sys
     import cv2
+    import numpy as np
 
     from pygame.display import get_window_size
     from pygame.locals import (K_w, K_s, K_d, K_a, K_ESCAPE, K_SPACE, KEYDOWN, QUIT,)
 
-    global screen, mute_state
+    global screen, mute_state, fullscreen
 
     pygame.init()
 
@@ -46,8 +47,12 @@ def finalle():
 
     sprite_sheet = pygame.image.load('adam_walk_1-sheet.png')
 
+
+
     intro = "final.mp4"
     cap = cv2.VideoCapture(intro)
+
+
 
     pygame.display.set_caption("level 2")
     logo = pygame.image.load("chronochills logo.png")
@@ -70,6 +75,12 @@ def finalle():
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
         frame_surface = pygame.surfarray.make_surface(frame)
         frame_surface = pygame.transform.scale(frame_surface, window_size)
+
+        if fullscreen:
+            screen = pygame.display.set_mode((window_size), pygame.FULLSCREEN)
+            screen.blit(pygame.transform.scale(frame_surface, screen.get_size()), (20, 0))
+        else:
+            screen = pygame.display.set_mode((window_size))
 
         # Event handling
         for event in pygame.event.get():
@@ -836,11 +847,16 @@ def level2_main():
     # Screen settings
     screen_width, screen_height = 1200, 672
     screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("level 1")
+    pygame.display.set_caption("level 2")
+    background_image = pygame.image.load("level 2.png")
     if fullscreen:
         screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+        background_image = pygame.image.load("level 2.png")
+        screen_width, screen_height = screen.get_size()
+        background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
     else:
         screen = pygame.display.set_mode((screen_width, screen_height))
+        background_image = pygame.image.load("level 2.png")
 
     clock = pygame.time.Clock()
 
@@ -891,7 +907,7 @@ def level2_main():
     logo = pygame.transform.scale(logo, (550, 300))
     pygame.display.set_icon(logo)
 
-    background_image = pygame.image.load("level 2.png")
+
 
     health = 350  # Initialize health
 
@@ -1223,7 +1239,7 @@ def level2_main():
         pygame.display.update()
         clock.tick(30)
 
-level2_main()
+
 
     
 
@@ -1269,6 +1285,10 @@ def level2():
     while running:
         ret, frame = cap.read()
         if not ret:  # Exit the loop if the video ends
+            level2_main()
+            break
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
             level2_main()
             break
             
@@ -1740,7 +1760,7 @@ play_unclicked = pygame.image.load("play_unclicked.png")
 play_unclicked = pygame.transform.scale(play_unclicked, (150, 90))
 options_unclicked = pygame.image.load("options_unclicked.png")
 options_unclicked = pygame.transform.scale(options_unclicked, (150, 90))
-quit_unclicked = pygame.image.load("quit_unclicked.png")
+quit_unclicked = pygame.image.load("quit_unclicked.png")    
 quit_unclicked = pygame.transform.scale(quit_unclicked, (150, 90))
 play_clicked = pygame.image.load("play_clicked.png")
 play_clicked = pygame.transform.scale(play_clicked, (150, 90))
