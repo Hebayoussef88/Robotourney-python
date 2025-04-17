@@ -202,24 +202,25 @@ def show_losing_page2():
     reset = pygame.transform.scale(reset, (200, 100))  # Adjust size as needed
 
     # Button position and hitbox
-    button_pos100 = (screen_width // 2 - reset.get_width() // 2, screen_height // 2)
-    button_rect100 = pygame.Rect(button_pos100, reset.get_size())
+    button_pos = (screen.get_width() // 2 - reset.get_width() // 2, screen.get_height() // 2)
+    button_rect = pygame.Rect(button_pos, reset.get_size())
 
-    running1000 = True
-    while running1000:
+    running = True
+    while running:
         screen.fill((0, 0, 0))
-        screen.blit(losing_text, (screen_width // 2 - losing_text.get_width() // 2, screen_height // 4))
-        screen.blit(reset, button_pos100)
+        screen.blit(losing_text, (screen.get_width() // 2 - losing_text.get_width() // 2, screen.get_height() // 4))
+        screen.blit(reset, button_pos)
 
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
+
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if button_rect100.collidepoint(event.pos):
-                    level2_main()
-                    running100 = False
-            if level_2 == False:
-                return running1000
+                if button_rect.collidepoint(event.pos):
+                    running = False  # Exit loop before restarting
+                    level2_main()    # Restart level
+
         pygame.display.flip()
 
 def show_winning_page():
@@ -661,7 +662,7 @@ class Boss:
     def phase1(self):
         """Handle the boss's movement and behavior in phase 1."""
         if not self.on_ground:
-            ground_level = screen_height - self.boss_image.get_height() + 50  # Move boss closer to the ground
+            ground_level = screen_height - self.boss_image.get_height() + 110  # Move boss closer to the ground
             self.rect_y += 10  # Move the rect down
             self.rect_x += 10  # Move the rect right
             if self.rect_y >= ground_level:
@@ -844,6 +845,10 @@ def level2_main():
     """Main game loop handling animations, movement, and events, including double jumping."""
     global screen, fullscreen, return_to_main_menu, boss, main_menu
 
+    boss_x = 1000
+    boss_y = 450
+    boss = Boss(boss_x, boss_y, screen)
+
     # Screen settings
     screen_width, screen_height = 1200, 672
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -859,6 +864,10 @@ def level2_main():
         background_image = pygame.image.load("level 2.png")
 
     clock = pygame.time.Clock()
+
+    boss_x = 1000
+    boss_y = 450
+    boss = Boss(boss_x, boss_y, screen)
 
     # Load animations
     idle_frames = load_animation('adam_idle-sheet.png', 420, 998)
@@ -1023,12 +1032,13 @@ def level2_main():
 
 
 
-                
+        player_rect = pygame.Rect(player_x - idle_frames[0].get_width() // 2, player_y - idle_frames[0].get_height() // 2, idle_frames[0].get_width(), idle_frames[0].get_height())        
 
         #  This part should always run, no matter the phase:
         for bullet in boss.boss_bullets[:]:
             bullet.move()
             bullet.draw()
+            player_rect = pygame.Rect(player_x - idle_frames[0].get_width() // 2, player_y - idle_frames[0].get_height() // 2, idle_frames[0].get_width(), idle_frames[0].get_height())
 
             if player_rect.colliderect(bullet.rect):
                 health -= 23
@@ -1133,6 +1143,8 @@ def level2_main():
                 current_state = "hidden"
                 current_frames = hidden
                 show_losing_page2()
+                health = 350
+                return
 
         last_hit_time = 0  # Initialize a variable to track the last hit time
         hit_cooldown = 1  # Cooldown in seconds
@@ -1239,7 +1251,7 @@ def level2_main():
         pygame.display.update()
         clock.tick(30)
 
-
+level2_main()
 
     
 
