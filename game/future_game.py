@@ -1707,7 +1707,7 @@ def options():
         pygame.display.flip()
 
 def main_menu():
-    global hand
+    global hand, mute_rect, unmute, mute, mute_state, mute_pos
     screen_height = 672
     screen_width  = 1200
     button_x1 = 520
@@ -1726,7 +1726,11 @@ def main_menu():
     pygame.display.set_icon(logo)
     screen1 = pygame.image.load("hack1 .jpg")
     scale = pygame.transform.scale(screen1, (800, 1200))
+    pygame.init()
+
     Font1 = pygame.font.Font('Double Pixel-7 400.ttf', 160)
+
+
     play_unclicked = pygame.image.load("play_unclicked.png")
     play_unclicked = pygame.transform.scale(play_unclicked, (150, 90))
     options_unclicked = pygame.image.load("options_unclicked.png")
@@ -1753,17 +1757,10 @@ def main_menu():
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
+                break
 
                 clock.tick(60)
-                if event.type == pygame.MOUSEBUTTONDOWN:  # Detect single click
-                    if mute_rect.collidepoint(event.pos):  # Check if the mute button is clicked
-                        mute_state = not mute_state  # Toggle mute state
-                if mute_state:
-                    # Display the mute button
-                    screen.blit(mute, mute_pos)
-                else:
-                    # Display the unmute button
-                    screen.blit(unmute, mute_pos)
+
 
         my_text = Font1.render("chronochills", True, (255, 255, 255))
         button_pos = (520, 300)
@@ -1836,8 +1833,6 @@ while True:
         underoos = False
     elif level == 2:
         level2()
-
-
 
 
 
